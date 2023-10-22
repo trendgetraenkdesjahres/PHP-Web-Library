@@ -1,7 +1,10 @@
 <?php
 
-namespace Route;
+namespace Router;
 
+/**
+ * RequestInterface defines the methods that should be implemented by request classes.
+ */
 interface RequestInterface
 {
     public function response(): void;
@@ -11,8 +14,16 @@ interface RequestInterface
     public function get_resource_path(): string|null;
 }
 
+/**
+ * Request is the base class for handling different types of requests.
+ */
 class Request
 {
+    /**
+     * Factory method to create a Request object based on the request type.
+     *
+     * @return Request The request object.
+     */
     public static function get(): Request
     {
         if (substr(php_sapi_name(), 0, 3) == 'cli') {
@@ -67,25 +78,43 @@ class Request
         }
     }
 
+    /**
+     * Get the HTTP request method.
+     *
+     * @return string|null The HTTP request method.
+     */
     public function get_method(): string|null
     {
         return $this->method;
     }
+
+    /**
+     * Get the request data.
+     *
+     * @return array|null The request data.
+     */
     public function get_data(): array|null
     {
         return $this->data;
     }
+
+    /**
+     * Get the resource path/ request-uri without query.
+     *
+     * @return string|null The resource path.
+     */
     public function get_resource_path(): string|null
     {
         return $this->resource_path;
     }
 
-    public function get_response(): Response
-    {
-        $response = new HTMLResponse($this);
-        return $response;
-    }
-
+    /**
+     * Parse a query string into an array.
+     *
+     * @param string $query The query string to parse.
+     *
+     * @return array|null The parsed query as an array.
+     */
     private static function get_query_array(string $query): array|null
     {
         $return = [];
@@ -104,22 +133,19 @@ class Request
         return $return;
     }
 
+    /**
+     * Constructor to initialize properties.
+     *
+     * @param string|null $method        The HTTP request method.
+     * @param string|null $resource_path The resource path.
+     * @param array|null  $data          The request data.
+     */
     public function __construct(public ?string $method = null, public ?string $resource_path = null, public ?array $data = null)
     {
     }
-
-    public function response(): void
-    {
-        $reponse_method = 'get_response';
-        if (method_exists($this, $reponse_method)) {
-            echo call_user_func([$this, $reponse_method]);
-        } else {
-            $class_name = get_class($this);
-            throw new \Exception("Public function '$reponse_method' for '$class_name' not defined.", 1);
-        }
-    }
 }
 
+// Include request type classes.
 foreach (glob(dirname(__FILE__) . "/RequestTypes/*Request.php") as $file) {
     require_once $file;
 }

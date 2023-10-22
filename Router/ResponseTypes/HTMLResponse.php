@@ -1,10 +1,18 @@
 <?php
 
-namespace Route;
+namespace Router;
 
+/**
+ * HTMLResponse is a specialized class for handling HTML responses.
+ */
 class HTMLResponse extends Response implements ResponseInterface
 {
 
+    /**
+     * Set the local documents based on the resource path.
+     *
+     * @return Response The response object.
+     */
     protected function set_local_documents(): Response
     {
         if ($this->resource === '/' | $this->resource === '') {
@@ -18,6 +26,11 @@ class HTMLResponse extends Response implements ResponseInterface
         return $this;
     }
 
+    /**
+     * Set the HTTP response code based on local documents.
+     *
+     * @return Response The response object.
+     */
     public function set_code(): Response
     {
         if ($this->local_documents) {
