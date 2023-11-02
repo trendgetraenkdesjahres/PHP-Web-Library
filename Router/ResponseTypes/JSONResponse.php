@@ -7,6 +7,25 @@ namespace Router;
  */
 class JSONResponse extends Response implements ResponseInterface
 {
+
+    /**
+     * Set the local documents based on the resource path.
+     *
+     * @return Response The response object.
+     */
+    protected function set_body_source(): Response
+    {
+        if ($this->resource === '/' | $this->resource === '') {
+            $files  = glob("content/*.{php,html}", GLOB_BRACE);
+        } else {
+            $files  = glob("content" . $this->resource . "/*.{php,html}", GLOB_BRACE);
+        }
+        if ($files) {
+            $this->local_documents = $files;
+        }
+        return $this;
+    }
+
     /**
      * Set the HTTP response code based on local documents.
      *
@@ -44,7 +63,16 @@ class JSONResponse extends Response implements ResponseInterface
      */
     public function set_body(string $body = ''): Response
     {
-        $this->body = "hello json";
+        if ($this->local_documents) {
+            ob_start();
+            foreach ($this->local_documents as $document) {
+                include $document;
+            }
+            $body = ob_get_clean();
+        } else {
+            $body = 'not found';
+        }
+        $this->body = json_encode($body);
         return $this;
     }
 }

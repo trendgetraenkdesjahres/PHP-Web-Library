@@ -7,6 +7,8 @@ namespace Router;
  */
 class JSONRequest extends Request implements RequestInterface
 {
+    public string $type = 'JSON';
+
     /**
      * Get a response object for JSON requests.
      *

@@ -13,12 +13,14 @@ class HTMLResponse extends Response implements ResponseInterface
      *
      * @return Response The response object.
      */
-    protected function set_local_documents(): Response
+    protected function set_body_source(): Response
     {
-        if ($this->resource === '/' | $this->resource === '') {
-            $files  = glob("content/*.{php,html}", GLOB_BRACE);
+        // not good!
+        $abs_path = dirname(__FILE__, 5);
+        if ($this->resource === '/' || $this->resource === '') {
+            $files  = glob("{$abs_path}/content/*.{php,html}", GLOB_BRACE);
         } else {
-            $files  = glob("content" . $this->resource . "/*.{php,html}", GLOB_BRACE);
+            $files  = glob("{$abs_path}/content" . $this->resource . "/*.{php,html}", GLOB_BRACE);
         }
         if ($files) {
             $this->local_documents = $files;

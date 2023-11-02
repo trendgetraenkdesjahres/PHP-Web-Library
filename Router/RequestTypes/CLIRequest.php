@@ -7,6 +7,8 @@ namespace Router;
  */
 class CLIRequest extends Request implements RequestInterface
 {
+    public string $type = 'CLI';
+
     /**
      * Get a response object for CLI requests.
      *

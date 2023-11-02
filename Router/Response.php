@@ -2,6 +2,8 @@
 
 namespace Router;
 
+use Throwable;
+
 /**
  * ResponseInterface defines the methods that should be implemented by response classes.
  */
@@ -13,42 +15,6 @@ interface ResponseInterface
     public function set_body(): Response;
 }
 
-class ResponseCreator
-{
-    /**
-     * Get a response object based on the request.
-     *
-     * @param Request $request The request object.
-     * @param string $responseType The type of response to create.
-     *
-     * @return Response The response object.
-     */
-    public static function get_response(Request $request, string $responseType = 'html'): Response
-    {
-        switch ($responseType) {
-            case 'html':
-                return new HTMLResponse($request);
-            case 'json':
-                return new JSONResponse($request);
-            case 'cli':
-                return new CLIResponse($request);
-            default:
-                throw new \InvalidArgumentException('Invalid response type');
-        }
-    }
-
-    /**
-     * Handle the response and send it to the client.
-     *
-     * @param Request $request The request object.
-     * @param string $responseType The type of response to create.
-     */
-    public static function response(Request $request, string $responseType = 'html'): void
-    {
-        $response = self::get_response($request, $responseType);
-        echo $response;
-    }
-}
 
 class Response
 {
@@ -56,7 +22,6 @@ class Response
     public ?int $code = null;
     public ?array $header = null;
     public ?string $body = null;
-    public ?array $local_action = null;
     public ?array $local_documents = null;
 
     /**
@@ -73,11 +38,13 @@ class Response
             call_user_func([$this, 'set_header']);
         }
         if ($request->get_resource_path()) {
-            call_user_func([$this, 'set_code']);
-            call_user_func([$this, 'set_local_documents']);
-        }
-        if ($request->get_method() == 'post') {
-            call_user_func([$this, 'set_local_action']);
+            try {
+                call_user_func([$this, 'set_body_source']);
+            } catch (Throwable $e) {
+                throw new \Error(
+                    get_class($this) . "->set_body_source() must be declared to handle a '" . get_class($request) . "'."
+                );
+            }
         }
         call_user_func([$this, 'set_body']);
     }

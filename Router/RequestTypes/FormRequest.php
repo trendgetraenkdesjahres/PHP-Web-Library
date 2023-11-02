@@ -7,6 +7,7 @@ namespace Router;
  */
 class FormRequest extends Request implements RequestInterface
 {
+    public string $type = 'Form';
     /**
      * Get a response object for form requests.
      *

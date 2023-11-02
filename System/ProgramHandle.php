@@ -159,9 +159,6 @@ class ProgramHandle implements ProgramHandleInterface
             count($reflection->getParameters()) != 1
             || $reflection->getParameters()[0]->getType() != get_class($this)
         ) {
-            var_dump(
-                $reflection->getParameters()
-            );
             throw new \Error("Callback function should have only one parameter of type 'ProgramHandle', but it is '" . $reflection->getParameters()[0]->getType() . "'.");
         }
 

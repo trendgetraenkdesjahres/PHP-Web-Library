@@ -46,7 +46,7 @@ class Settings
      *
      * @return string
      */
-    public static function get(string $key): string
+    public static function get(string $key, $required = false): ?string
     {
         if (!self::create_ini()) {
             self::load();
@@ -60,10 +60,10 @@ class Settings
                 foreach ($keys as $k) {
                     if (isset($return[$k])) {
                         $return = $return[$k];
+                    } elseif ($required) {
+                        throw new \Error("Setting '$key' was not found.");
                     } else {
-                        Warning::trigger("Setting '$key' was not found.");
                         $return = null;
-                        break;
                     }
                 }
                 return $return;
@@ -74,6 +74,7 @@ class Settings
             Notice::trigger(
                 self::$file_name . " was not found. Created from template."
             );
+            return null;
         }
     }
 

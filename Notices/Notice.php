@@ -113,3 +113,5 @@ class Notice extends \Exception
         );
     }
 }
+
+require_once("Warning.php");

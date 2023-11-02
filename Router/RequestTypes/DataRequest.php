@@ -7,6 +7,8 @@ namespace Router;
  */
 class DataRequest extends Request implements RequestInterface
 {
+    public string $type = 'Data';
+
     /**
      * Get a response object for data requests.
      *

@@ -7,6 +7,8 @@ namespace Router;
  */
 class HTMLRequest extends Request implements RequestInterface
 {
+    public string $type = 'HTML';
+
     /**
      * Get a response object for HTML requests.
      *
