@@ -167,7 +167,6 @@ class Settings
                         $value = '"' . self::escape_characters($value) . '"';
                         break;
 
-                    case 'string':
                     case 'integer':
                     case 'double':
                         // No modification needed for these types
