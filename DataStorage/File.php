@@ -148,6 +148,11 @@ class FileStorage implements DataStorageInterface
         return true;
     }
 
+    public static function get_data(): array
+    {
+        return self::$data;
+    }
+
     /**
      * Create a row in a table with key-value pairs.
      *
