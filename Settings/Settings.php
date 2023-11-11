@@ -60,14 +60,14 @@ class Settings
     }
 
     /**
-     * Method register_key
+     * Register a Settings key-value pair
      *
      * @param string $key The 'key' or 'section/key' that should be added to the settings.ini file
      * @param null|bool|float|int|string [optional] $default the default value of that setting.
      *
-     * @return void
+     * @return bool true on success, false if settings already set.
      */
-    public static function register(string $key, null|bool|float|int|string $default = ''): void
+    public static function register(string $key, null|bool|float|int|string $default = ''): bool
     {
         if (strpbrk($key, '{}|&~![()^"')) {
             throw new \Error("'$key' must not contain any of this characters: {}|&~![()\"");
@@ -84,7 +84,9 @@ class Settings
         if (!isset(self::$settings[$section_and_key['section']][$section_and_key['key']])) {
             self::$settings[$section_and_key['section']][$section_and_key['key']] = $default;
             self::write_current_settings_to_ini();
+            return true;
         }
+        return false;
     }
 
     /**
@@ -105,22 +107,22 @@ class Settings
      * Creates settings.ini file from array self::$template .
      * If settings.ini already exists, it will overwrite it.
      *
-     * @return bool
+     * @return void
      */
-    protected static function touch_ini(): bool
+    protected static function touch_ini(): void
     {
-        return self::write_ini(self::$template);
+        self::write_ini(self::$template);
     }
 
     /**
      * Creates settings.ini file from current array self::$settings.
      * If settings.ini already exists, it will overwrite it.
      *
-     * @return bool
+     * @return void
      */
-    protected static function write_current_settings_to_ini(): bool
+    protected static function write_current_settings_to_ini(): void
     {
-        return self::write_ini(self::$settings);
+        self::write_ini(self::$settings);
     }
 
     /**
@@ -129,9 +131,9 @@ class Settings
      *
      * @param array $content The array of Settings. ['section' => ['key' => 'value'] ]
      *
-     * @return bool
+     * @return void
      */
-    private static function write_ini(array $content): bool
+    private static function write_ini(array $content): void
     {
         $class = new \ReflectionClass(get_called_class());
         $comment_string = trim(preg_replace(
@@ -178,10 +180,12 @@ class Settings
             }
             $settings_ini_content .= "{$key}={$value}" . PHP_EOL;
         }
-        return file_put_contents(
+        if (file_put_contents(
             filename: self::$file_name,
             data: $settings_ini_content
-        ) ? true : false;
+        ) === false) {
+            throw new \Error("Could not write data to '" . self::$file_name . "'");
+        }
     }
 
     /**
