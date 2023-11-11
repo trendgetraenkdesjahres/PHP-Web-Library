@@ -2,114 +2,182 @@
 
 namespace Settings;
 
-use Notices\Notice;
-use Notices\Warning;
-
 /**
  * Settings
  *
- * get Setting from setting.ini file with Settings::get('key'). echo with Settings::echo('key').
- * creates file if not there yet.
+ * get Setting values from setting.ini file with Settings::get('section_name/key'). keys of the section [settings] can be accessed with 'key' directly.
  */
 class Settings
 {
-    public static $settings = [];
+    private static array $settings = [];
+    private static bool $initialized = false;
     protected static $file_name = 'settings.ini';
     protected static array $template = [
-        'settings' => [
-            'cookie_file' => 'data/cookies.txt',
-            'temporary_files_folder' => 'tmp/',
-            'temporary_files_max_mb' => '64',
-            'history_file' => 'data/history.json',
-        ],
-
-        'spotify' => [
-            'client_id' => '',
-            'client_secret' => '',
-            'redirect_url' => '',
-        ],
-
-        'telegram' => [
-            'token' => '',
-            'chat_id' => '',
-        ],
-
-        'youtube' => [
-            'api_key' => '',
-        ],
+        'settings' => [],
     ];
 
     /**
-     * Method get
+     * Echo the value of 'section/key'
      *
-     * @param string $key key can be 'key' or even 'section/key' or further.
-     *
-     * @return string
-     */
-    public static function get(string $key, $required = false): ?string
-    {
-        if (!self::create_ini()) {
-            self::load();
-
-            $return = self::$settings;
-            if ($keys = explode(separator: '/', string: $key)) {
-                if (isset($return['settings'][$key])) {
-                    return $return['settings'][$key];
-                }
-
-                foreach ($keys as $k) {
-                    if (isset($return[$k])) {
-                        $return = $return[$k];
-                    } elseif ($required) {
-                        throw new \Error("Setting '$key' was not found.");
-                    } else {
-                        $return = null;
-                    }
-                }
-                return $return;
-            } else {
-                return self::$settings[$key];
-            }
-        } else {
-            Notice::trigger(
-                self::$file_name . " was not found. Created from template."
-            );
-            return null;
-        }
-    }
-
-    /**
-     * Method echo
-     *
-     * @param string $key key can be 'key' or even 'section/key' or further.
+     * @param string $key key can be 'key' to access values of the section [settings] or 'section/key' to access values of other sections.
+     * @param bool [optional] $strict if true, the method throws an error when the 'section/key' is not found.
      *
      * @return void
      */
-    public static function echo(string $key): void
+    public static function echo(string $key, bool $strict = false): void
     {
-        echo self::get(key: $key);
+        echo self::get(
+            key: $key,
+            strict: $strict
+        );
     }
 
     /**
-     * Method create_ini
+     * Get the value of 'section/key'
      *
-     * creates settings.ini file if possible and not existing yet.
-     * returs true on success, false on error.
+     * @param string $key key can be 'key' to access values of the section [settings] or 'section/key' to access values of other sections.
+     * @param bool $strict if true, the method throws an error when the 'section/key' is not found.
+     *
+     * @return string
+     */
+    public static function get(string $key, $strict = true): ?string
+    {
+        if (!self::$initialized) self::initialize();
+        try {
+            $section_and_key =  self::get_section_key_array($key);
+        } catch (\Throwable $e) {
+            throw new \Error($e->getMessage());
+        }
+        if (!isset(self::$settings[$section_and_key['section']])) {
+            if ($strict) throw new \Error("Setting section [{$section_and_key['section']}] was not found.");
+            return null;
+        }
+        if (!isset(self::$settings[$section_and_key['section']][$section_and_key['key']])) {
+            if ($strict) throw new \Error("Setting {$section_and_key['key']} in [{$section_and_key['section']}] was not found.");
+            return null;
+        }
+        return self::$settings[$section_and_key['section']][$section_and_key['key']];
+    }
+
+    /**
+     * Method register_key
+     *
+     * @param string $key The 'key' or 'section/key' that should be added to the settings.ini file
+     * @param null|bool|float|int|string [optional] $default the default value of that setting.
+     *
+     * @return void
+     */
+    public static function register(string $key, null|bool|float|int|string $default = ''): void
+    {
+        if (strpbrk($key, '{}|&~![()^"')) {
+            throw new \Error("'$key' must not contain any of this characters: {}|&~![()\"");
+        }
+
+        if (is_string($default)) {
+            $default = self::escape_characters($default);
+        }
+
+        $section_and_key = self::get_section_key_array($key);
+        if (!isset(self::$settings[$section_and_key['section']])) {
+            self::$settings[$section_and_key['section']] = [];
+        }
+        if (!isset(self::$settings[$section_and_key['section']][$section_and_key['key']])) {
+            self::$settings[$section_and_key['section']][$section_and_key['key']] = $default;
+            self::write_current_settings_to_ini();
+        }
+    }
+
+    /**
+     * Creates settings.ini if not existing yet and loads the Content of settings.ini statically into Settings Class and sets self::$initialized.
+     *
+     * @return void
+     */
+    private static function initialize(): void
+    {
+        if (!file_exists(filename: self::$file_name,)) {
+            self::touch_ini();
+        }
+        self::load();
+        self::$initialized = true;
+    }
+
+    /**
+     * Creates settings.ini file from array self::$template .
+     * If settings.ini already exists, it will overwrite it.
      *
      * @return bool
      */
-    protected static function create_ini(): bool
+    protected static function touch_ini(): bool
     {
-        if (file_exists(filename: self::$file_name,)) {
-            return false;
-        }
+        return self::write_ini(self::$template);
+    }
 
+    /**
+     * Creates settings.ini file from current array self::$settings.
+     * If settings.ini already exists, it will overwrite it.
+     *
+     * @return bool
+     */
+    protected static function write_current_settings_to_ini(): bool
+    {
+        return self::write_ini(self::$settings);
+    }
+
+    /**
+     * Creates settings.ini file from array $content array.
+     * If settings.ini already exists, it will overwrite it.
+     *
+     * @param array $content The array of Settings. ['section' => ['key' => 'value'] ]
+     *
+     * @return bool
+     */
+    private static function write_ini(array $content): bool
+    {
+        $class = new \ReflectionClass(get_called_class());
+        $comment_string = trim(preg_replace(
+            [
+                '/(\/\*\*| *\*\/$|^ *\*)/m',
+                '/\n\n/m'
+            ],
+            [
+                '',
+                PHP_EOL
+            ],
+            $class->getDocComment()
+        ));
         $settings_ini_content = '';
-        foreach (self::$template as $section_key => $section_items) {
+        foreach (explode(PHP_EOL, $comment_string) as $line) {
+            $settings_ini_content .= "; " . trim($line) . PHP_EOL;
+        }
+        $settings_ini_content .= PHP_EOL;
+
+        foreach ($content as $section_key => $section_items) {
             $settings_ini_content .= "[$section_key]" . PHP_EOL;
             foreach ($section_items as $key => $value) {
-                $settings_ini_content .= "{$key}='{$value}'" . PHP_EOL;
+                switch ($type = gettype($value)) {
+                    case 'boolean':
+                        $value = $value ? 'true' : 'false';
+                        break;
+
+                    case 'NULL':
+                        $value = 'null';
+                        break;
+
+                    case 'string':
+                        $value = '"' . self::escape_characters($value) . '"';
+                        break;
+
+                    case 'string':
+                    case 'integer':
+                    case 'double':
+                        // No modification needed for these types
+                        break;
+
+                    default:
+                        throw new \Error("Unsupported type: " . $type);
+                }
             }
+            $settings_ini_content .= "{$key}={$value}" . PHP_EOL;
         }
         return file_put_contents(
             filename: self::$file_name,
@@ -118,18 +186,56 @@ class Settings
     }
 
     /**
-     * Method load
-     *
-     * loads the settings.ini file.
+     * Loads the settings.ini file.
      *
      * @return void
      */
-    protected static function load()
+    protected static function load(): void
     {
         self::$settings = parse_ini_file(
             filename: self::$file_name,
             process_sections: true,
             scanner_mode: INI_SCANNER_TYPED
         );
+    }
+
+    /**
+     * Escapes character of a string to get used as ini value.
+     *
+     * @param string $string [explicite description]
+     *
+     * @return string
+     */
+    private static function escape_characters(string $string): string
+    {
+        return addcslashes($string, "\\\'\"\0\a\b\t\r\n;#=:");
+    }
+
+    /**
+     * Converts string to access Settings to array of ['section' => 'section_name', 'key' => 'key_name']
+     *
+     * @param string $key [explicite description]
+     *
+     * @return array
+     */
+    private static function get_section_key_array(string $key): array
+    {
+        $section_and_key = explode('/', $key);
+        switch (count($section_and_key)) {
+            case 1:
+                return [
+                    'section' => 'settings',
+                    'key' => $section_and_key[0]
+                ];
+
+            case 2:
+                return [
+                    'section' => $section_and_key[0],
+                    'key' => $section_and_key[1]
+                ];
+
+            default:
+                throw new \Error("'$key' is an invalid key.");
+        }
     }
 }
