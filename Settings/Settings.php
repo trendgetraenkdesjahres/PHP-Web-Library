@@ -2,6 +2,8 @@
 
 namespace Settings;
 
+use Debug\Debug;
+
 /**
  * Settings
  *
@@ -9,7 +11,7 @@ namespace Settings;
  */
 class Settings
 {
-    private static array $settings = [];
+    public static array $settings = [];
     private static bool $initialized = false;
     protected static $file_name = 'settings.ini';
     protected static array $template = [
@@ -40,7 +42,7 @@ class Settings
      *
      * @return string
      */
-    public static function get(string $key, $strict = true): ?string
+    public static function get(string $key, $strict = false): ?string
     {
         if (!self::$initialized) self::initialize();
         try {
@@ -69,6 +71,9 @@ class Settings
      */
     public static function register(string $key, null|bool|float|int|string $default = ''): bool
     {
+        // TODO DAS MUSS IWIE ABAER NICHT SO
+        if (!self::$initialized) self::initialize();
+
         if (strpbrk($key, '{}|&~![()^"')) {
             throw new \Error("'$key' must not contain any of this characters: {}|&~![()\"");
         }
@@ -78,9 +83,11 @@ class Settings
         }
 
         $section_and_key = self::get_section_key_array($key);
+
         if (!isset(self::$settings[$section_and_key['section']])) {
             self::$settings[$section_and_key['section']] = [];
         }
+
         if (!isset(self::$settings[$section_and_key['section']][$section_and_key['key']])) {
             self::$settings[$section_and_key['section']][$section_and_key['key']] = $default;
             self::write_current_settings_to_ini();
@@ -177,8 +184,9 @@ class Settings
                     default:
                         throw new \Error("Unsupported type: " . $type);
                 }
+                $settings_ini_content .= "{$key}={$value}" . PHP_EOL;
             }
-            $settings_ini_content .= "{$key}={$value}" . PHP_EOL;
+            $settings_ini_content .= PHP_EOL;
         }
         if (file_put_contents(
             filename: self::$file_name,
@@ -211,7 +219,7 @@ class Settings
      */
     private static function escape_characters(string $string): string
     {
-        return addcslashes($string, "\\\'\"\0\a\b\t\r\n;#=:");
+        return addcslashes($string, "\\\'\"\0\t\r\n;#=:");
     }
 
     /**
