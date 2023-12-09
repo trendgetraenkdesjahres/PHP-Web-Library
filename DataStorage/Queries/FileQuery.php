@@ -3,7 +3,7 @@
 use DataStorage\FileStorage;
 use Notices\Warning;
 
-class FileQueryInterface implements QueryInterface
+class FileQuery implements QueryInterface
 
 {
     public array $condition;

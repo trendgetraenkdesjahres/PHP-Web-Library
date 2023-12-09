@@ -48,6 +48,7 @@ class Query
         string $command = 'get',
         string $where_condition,
         mixed $value = null
-    ) {
+    ): QueryInterface {
+        
     }
 }

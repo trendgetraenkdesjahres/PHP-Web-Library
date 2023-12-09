@@ -32,16 +32,18 @@ class DataStorage
      * @return DataStorageTable The table instance.
      * @throws \Error If no suitable configuration for Filebased or DBbased setting is found.
      */
-    public function get_table(string $name): DatabaseTable
+    public static function get_table(string $name): DatabaseTable|FileTable
     {
-        if (Settings::get('db_name')) {
-            DatabaseStorage::initalize();
-            return DatabaseStorage::get_table($name);
-        } elseif (Settings::get('data_file_name')) {
+        if (Settings::get('datastorage/database_name')) {
+            if (DatabaseStorage::initalize()) {
+                return DatabaseStorage::get_table($name);
+            }
+        }
+        if (Settings::get('datastorage/file_name')) {
             FileStorage::initalize();
             return FileStorage::get_table($name);
         } else {
-            throw new \Error("No Setting for 'db_name' or 'data_file_name' found.");
+            throw new \Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
         }
     }
 }

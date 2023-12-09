@@ -23,7 +23,8 @@ class FileStorage implements DataStorageInterface
      */
     public static function initalize(): bool
     {
-        $path = Settings::get('data_file_name');
+        Settings::register('datastorage/file_name');
+        $path = Settings::get('datastorage/file_name');
         if (!str_starts_with($path, DIRECTORY_SEPARATOR)) {
             $path = getcwd() . '/' . $path;
         }
@@ -307,7 +308,6 @@ class FileStorage implements DataStorageInterface
                         }
                         if (self::is_value_in_column_allowed($table, $column, $value, 'Error')) {
                             self::$data[$table][$column][$id] = $value;
-                            var_dump(self::$data[$table]);
                         }
                         self::$file->write_file(self::$data);
                         break;

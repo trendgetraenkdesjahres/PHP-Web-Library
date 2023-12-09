@@ -22,13 +22,21 @@ class DatabaseStorage implements DataStorageInterface
      */
     public static function initalize(): bool
     {
-        $databasename = Settings::get('db_name');
-        $username = Settings::get('db_username');
-        $password = Settings::get('db_password');
-        $host = ($host = Settings::get('db_host')) ? $host : 'localhost';
-        $port = ($port = Settings::get('db_port')) ? $port : '3306';
-        $charset = ($charset = Settings::get('db_charset')) ? $charset : 'utf8mb4';
-        $driver = ($driver = Settings::get('db_driver')) ? $driver : 'mysql';
+        Settings::register('datastorage/database_name');
+        Settings::register('datastorage/database_username');
+        Settings::register('datastorage/database_password');
+        try {
+            $databasename = Settings::get('datastorage/database_name', true);
+            $username = Settings::get('datastorage/database_username', true);
+            $password = Settings::get('datastorage/database_password', true);
+        } catch (\Throwable $e) {
+            throw new \Error($e);
+        }
+
+        $host = ($host = Settings::get('datastorage/database_host')) ? $host : 'localhost';
+        $port = ($port = Settings::get('datastorage/database_port')) ? $port : '3306';
+        $charset = ($charset = Settings::get('datastorage/database_charset')) ? $charset : 'utf8mb4';
+        $driver = ($driver = Settings::get('datastorage/database_driver')) ? $driver : 'mysql';
 
         $dns = "$driver:host=$host";
         $dns .= $databasename ? ";dbname=$databasename" : '';
@@ -40,16 +48,17 @@ class DatabaseStorage implements DataStorageInterface
             PDO::ATTR_EMULATE_PREPARES   => false,
         ];
         try {
-            self::$pdo = new PDO(
+            $pdo = new PDO(
                 $dns,
                 $username,
                 $password,
                 $options
             );
         } catch (\Throwable $e) {
-            Warning::trigger("$dns: $e->message");
+            Warning::trigger($e->getMessage() . ". Check your Settings.");
             return false;
         }
+        self::$pdo = $pdo;
         return true;
     }
 

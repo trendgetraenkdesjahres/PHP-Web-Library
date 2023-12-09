@@ -2,6 +2,8 @@
 
 namespace Notices;
 
+use Types\StringType;
+
 class Warning extends Notice
 {
     /**
@@ -28,10 +30,17 @@ class Warning extends Notice
         $function_name = self::getFunctionName(trace_limit: 4);
         $function_file = self::getFunctionFile(trace_level: 3);
 
-        $message = get_called_class() . ":\t[$function_name] $message in $function_file";
-        trigger_error(
-            message: $message,
-            error_level: E_USER_WARNING
-        );
+        if (class_exists('')) {
+            $message = new StringType("Warning: $message");
+            $message->append_line("\n$function_file")->box_around_string(2, $function_name);
+            $message = "Warning:\t$function_name $message in $function_file\n";
+        } else {
+            $title = "Warning";
+            $message = $message;
+            $function_name = "[$function_name]";
+            $function_file = $function_file;
+            $message = "$title:\t$function_name $message in $function_file\n";
+        }
+        echo $message;
     }
 }
