@@ -7,12 +7,11 @@ namespace DataStorage;
  */
 class FileTable extends DataStorageTable implements DataStorageTableInterface
 {
-    /**
-     * Get a row from the file-based table by its ID.
-     *
-     * @param int $id The ID of the row.
-     * @return array The row data.
-     */
+    public function get_name(): string
+    {
+        return $this->name;
+    }
+
     public function get_row(int $id): array
     {
         FileStorage::query(
@@ -23,13 +22,6 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return FileStorage::get_queried_data();
     }
 
-    /**
-     * Get a cell from the file-based table based on WHERE conditions.
-     *
-     * @param string $return_column The column to retrieve.
-     * @param string ...$where_condition The WHERE conditions.
-     * @return mixed The cell value.
-     */
     public function get_cell_where(string $return_column, string ...$where_condition): mixed
     {
         $where_conditions = implode(" AND ", $where_condition);
@@ -42,12 +34,6 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return FileStorage::get_queried_data()[$return_column];
     }
 
-    /**
-     * Get any rows from the file-based table based on WHERE conditions.
-     *
-     * @param string ...$where_condition The WHERE conditions.
-     * @return array An array of rows.
-     */
     public function get_any_row_where(?string ...$where_condition): array
     {
         $where_conditions = implode(" AND ", $where_condition);
@@ -59,13 +45,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return FileStorage::get_queried_data();
     }
 
-    /**
-     * Add a new row to the file-based table.
-     *
-     * @param array $key_value_pairs An array of key-value pairs for the new row.
-     * @return DataStorageTable The updated table instance.
-     */
-    public function add_row(array $key_value_pairs): DataStorageTable
+    public function add_row(array $key_value_pairs): DataStorageTableInterface
     {
         FileStorage::create_table_row(
             table: $this->name,
@@ -74,15 +54,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return $this;
     }
 
-    /**
-     * Set the value of a cell in a row by ID.
-     *
-     * @param int $id The ID of the row.
-     * @param string $column The column name.
-     * @param mixed $value The new value.
-     * @return DataStorageTable The updated table instance.
-     */
-    public function set_cell(int $id, string $column, mixed $value): DataStorageTable
+    public function set_cell(int $id, string $column, mixed $value): DataStorageTableInterface
     {
         FileStorage::query(
             table: $this->name,
@@ -94,15 +66,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return $this;
     }
 
-    /**
-     * Set the value of a cell based on WHERE conditions.
-     *
-     * @param string $column The column name.
-     * @param mixed $value The new value.
-     * @param mixed $where_condition The WHERE condition.
-     * @return DataStorageTable The updated table instance.
-     */
-    public function set_cell_where(string $column, mixed $value, $where_condition): DataStorageTable
+    public function set_cell_where(string $column, mixed $value, $where_condition): DataStorageTableInterface
     {
         FileStorage::query(
             table: $this->name,
@@ -114,13 +78,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return $this;
     }
 
-    /**
-     * Delete a row by its ID.
-     *
-     * @param int $id The ID of the row to delete.
-     * @return DataStorageTable The updated table instance.
-     */
-    public function delete_row(int $id): DataStorageTable
+    public function delete_row(int $id): DataStorageTableInterface
     {
         return $this;
     }
@@ -132,13 +90,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
     ): mixed {
     }
 
-    /**
-     * Delete rows based on WHERE conditions.
-     *
-     * @param mixed $where_condition The WHERE condition.
-     * @return DataStorageTable The updated table instance.
-     */
-    public function delete_row_where($where_condition): DataStorageTable
+    public function delete_row_where($where_condition): DataStorageTableInterface
     {
         return $this;
     }

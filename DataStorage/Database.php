@@ -62,13 +62,28 @@ class DatabaseStorage implements DataStorageInterface
         return true;
     }
 
+
+    /**
+     * Check if table exists
+     *
+     * @param string $name The name of the table.
+     * @return bool
+     */
+    public static function table_exists(string $name): bool
+    {
+        $sql_query = "SHOW TABLES LIKE '$name'";
+        self::query($sql_query);
+        return (bool) self::get_queried_data();
+    }
+
+
     /**
      * Create a table with the given name and columns.
      *
      * @param string $table The name of the table.
      * @param TableColumn ...$columns The columns to create.
      */
-    public static function create_table(string $table, TableColumn ...$columns)
+    public static function create_table(string $table, TableColumn ...$columns): bool
     {
         $sql_query = "CREATE TABLE $table (";
         foreach ($columns as $column) {
@@ -101,6 +116,8 @@ class DatabaseStorage implements DataStorageInterface
         }
         $sql_query = trim($sql_query, ", ") . ")";
         self::query($sql_query);
+
+        return true;
     }
 
     /**
@@ -135,7 +152,7 @@ class DatabaseStorage implements DataStorageInterface
      * @param string $table_name The name of the table.
      * @return DatabaseTable The table instance.
      */
-    public static function get_table(string $table_name): DatabaseTable
+    public static function get_table(string $table_name): DataStorageTableInterface
     {
         return new DatabaseTable($table_name);
     }

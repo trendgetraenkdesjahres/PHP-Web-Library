@@ -58,6 +58,23 @@ class FileStorage implements DataStorageInterface
     }
 
     /**
+     * Check if a table exists.
+     *
+     * @param string $table The table name.
+     * @return bool Returns true if the element exists, false otherwise.
+     */
+    public static function table_exists(string $table, ?string $throwable = null): bool
+    {
+        if (!key_exists($table, self::$data)) {
+            if ($throwable) {
+                throw new $throwable("Table '$table' does not exist");
+            }
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * Check if a table element exists.
      *
      * @param string $table The table name.
@@ -345,7 +362,7 @@ class FileStorage implements DataStorageInterface
      * @param string $table_name The name of the table.
      * @return FileTable The table instance.
      */
-    public static function get_table(string $table_name): FileTable
+    public static function get_table(string $table_name): DataStorageTableInterface
     {
         return new FileTable($table_name, false);
     }
