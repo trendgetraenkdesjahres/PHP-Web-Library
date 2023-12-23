@@ -4,25 +4,133 @@ namespace Model;
 
 use DataStorage\DataStorage;
 use DataStorage\DataStorageTableInterface;
+use DataStorage\TableColumn;
+use Notices\Warning;
 
-class Model
+abstract class Model
 {
-    protected int $id;
-    private DataStorageTableInterface $table;
 
-    public function __construct()
+    private static bool $initialized = false;
+    function __construct()
     {
-        if (get_class($this) === 'Model') {
-            throw new \Error('don`t call me directly!!');
-        }
-        if (!DataStorage::table_exists(get_class($this))) {
-            die(get_class($this) . ' does not existsss');
-            // TODO create table with params
-        }
-        $this->table = DataStorage::get_table(get_class($this));
+        self::init_model();
     }
 
-    private function get_properties()
+    /**
+     * Get access to all the data of the class
+     *
+     * @return DataStorageTableInterface
+     */
+    private static function access_data(): DataStorageTableInterface
     {
+        if (!self::$initialized) {
+            self::init_model();
+        }
+        return DataStorage::get_table(get_called_class());
+    }
+
+    final public static function init_model()
+    {
+        $class = get_called_class();
+        if (!DataStorage::table_exists($class)) {
+            Warning::trigger("'" . $class . "' has no table yet. will create one");
+            self::create_table($class);
+        }
+        self::$initialized = true;
+    }
+
+    private static function create_table($class)
+    {
+        $columns = [];
+        foreach ((new \ReflectionClass($class))->getProperties() as $property_reflection) {
+            if (!$property_reflection->getType()->isBuiltin()) {
+                throw new \Error("Model does not support custom types yet.");
+            }
+            if ($property_reflection->getType()->getName() == 'array') {
+                throw new \Error("Model does not support arrays yet.");
+            }
+            if ($property_reflection->isPrivate()) {
+                continue;
+            }
+            array_push($columns, new TableColumn(
+                name: $property_reflection->getName(),
+                type: $property_reflection->getType()->getName(),
+                length: null,
+                nullable: $property_reflection->getType()->allowsNull()
+            ));
+        }
+        DataStorage::create_table($class, ...$columns);
+    }
+
+    /**
+     * Add in instance of this class
+     *
+     * @param array $property_value_pairs The data must represent the declared properties of the class.
+     * @return DataStorageTableInterface
+     */
+    final static function add_instance(array $property_value_pairs): DataStorageTableInterface
+    {
+        return self::access_data()->add_row($property_value_pairs);
+    }
+
+    /**
+     * Get's the value of a property from this class, where another value matches a property.
+     * If there multiple matches, it will just return the first one
+     *
+     * @param string $property the property to return
+     * @param string $property_value_pairs The conditions to check
+     * @return mixed the value of the property
+     */
+    final static function get_value_where(string $property, string ...$property_value_pairs): mixed
+    {
+        return self::access_data()->get_cell_where($property, ...$property_value_pairs);
+    }
+
+    final static function get_instance_where(string $property_value_pair): self
+    {
+        return self::array_to_instance(
+            array: self::access_data()->get_any_row_where($property_value_pair)[0]
+        );
+    }
+
+    final static function get_instance(int $id): self
+    {
+        var_dump(self::access_data());
+        return self::array_to_instance(
+            array: self::access_data()->get_row($id)
+        );
+    }
+
+    private static function array_to_instance(array $array): self
+    {
+        $reflection = new \ReflectionClass(get_called_class());
+        $object = $reflection->newInstanceWithoutConstructor();
+        foreach ($array as $property => $value) {
+            if ($property === 'id') {
+                continue;
+            }
+            if (!$reflection->hasProperty($property)) {
+                throw new \Error("'" . get_called_class() . "' has no property named '$property'");
+            }
+            $property_reflection = $reflection->getProperty($property);
+            $property_reflection->setAccessible(true);
+            $property_reflection->setValue($object, $value);
+        }
+        return $object;
+    }
+
+    /**
+     * Checks if an instance with a value of a property already exists
+     *
+     * @param string $property
+     * @param string $value
+     * @return bool
+     */
+    final static function has_instance_with_value(string $property, string $value): bool
+    {
+        if (self::access_data()->get_cell_where($property, "$property = '$value'")) {
+            return true;
+        }
+        return false;
     }
 }

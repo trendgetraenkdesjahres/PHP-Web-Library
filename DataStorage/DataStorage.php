@@ -15,11 +15,11 @@ require_once 'File.php';
  */
 interface DataStorageInterface
 {
-    public static function get_table(string $table_name): DataStorageTableInterface;
-    public static function table_exists(string $table_name): bool;
+    public static function initalize(): bool;
     public static function create_table(string $table, TableColumn ...$columns): bool;
     public static function get_queried_data(): mixed;
-    public static function initalize(): bool;
+    public static function get_table(string $table_name): DataStorageTableInterface;
+    public static function table_exists(string $table_name): bool;
 }
 
 /**
@@ -65,8 +65,9 @@ class DataStorage
             }
         }
         if (Settings::get('datastorage/file_name')) {
-            FileStorage::initalize();
-            FileStorage::create_table($name, ...$columns);
+            if (FileStorage::initalize()) {
+                FileStorage::create_table($name, ...$columns);
+            }
         } else {
             throw new \Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
         }
@@ -80,8 +81,9 @@ class DataStorage
             }
         }
         if (Settings::get('datastorage/file_name')) {
-            FileStorage::initalize();
-            return FileStorage::table_exists($name);
+            if (FileStorage::initalize()) {
+                return FileStorage::table_exists($name);
+            }
         } else {
             throw new \Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
         }

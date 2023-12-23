@@ -72,6 +72,6 @@ class Debug
 
     private function print_html_var(): void
     {
-        print_r("<pre>" . var_export($this->expression_value, true) . "</pre>");
+        print "<pre>" . var_export($this->expression_value, true) . "</pre>";
     }
 }

@@ -1,0 +1,13 @@
+
+rewrite DataStorage with traits for File & DB
+rewrite DataStorageTable with traits for File & DB
+
+add META-Table Support
+add class loader
+repair error-displaying
+add html-error displaying
+add json-error displaying
+Abstract model should lock property 'id'
+
+
+rewrite

@@ -26,13 +26,13 @@ interface DataStorageTableInterface
     public function get_row(int $id): array;
 
     /**
-     * Get a cell from the table based on WHERE conditions.
+     * Get a cell from the table based on WHERE conditions. If there multiple matches, it will just return the first one.
      *
      * @param string $return_column The column to retrieve.
      * @param string ...$where_condition The WHERE conditions.
      * @return mixed The cell value.
      */
-    public function get_cell_where(string $return_column, string ...$where_condition): mixed;
+    public function get_cell_where(string $return_column, string ...$where_condition);
 
     /**
      * Get any rows from the table based on WHERE conditions.
@@ -74,7 +74,7 @@ interface DataStorageTableInterface
      * Add a new row to the table.
      *
      * @param array $key_value_pairs An array of key-value pairs for the new row.
-     * @return DataStorageTable The updated table instance.
+     * @return DataStorageTableInterface The updated table instance.
      */
     public function add_row(array $key_value_pairs): DataStorageTableInterface;
 
@@ -84,7 +84,7 @@ interface DataStorageTableInterface
      * @param int $id The ID of the row.
      * @param string $column The column name.
      * @param mixed $value The new value.
-     * @return DataStorageTable The updated table instance.
+     * @return DataStorageTableInterface The updated table instance.
      */
     public function set_cell(int $id, string $column, mixed $value): DataStorageTableInterface;
 
@@ -94,7 +94,7 @@ interface DataStorageTableInterface
      * @param string $column The column name.
      * @param mixed $value The new value.
      * @param mixed $where_condition The WHERE condition.
-     * @return DataStorageTable The updated table instance.
+     * @return DataStorageTableInterface The updated table instance.
      */
     public function set_cell_where(string $column, mixed $value, $where_condition): DataStorageTableInterface;
 
@@ -102,7 +102,7 @@ interface DataStorageTableInterface
      * Delete a row by its ID.
      *
      * @param int $id The ID of the row to delete.
-     * @return DataStorageTable The updated table instance.
+     * @return DataStorageTableInterface The updated table instance.
      */
     public function delete_row(int $id): DataStorageTableInterface;
 
@@ -110,7 +110,7 @@ interface DataStorageTableInterface
      * Delete rows based on WHERE conditions.
      *
      * @param mixed $where_condition The WHERE condition.
-     * @return DataStorageTable The updated table instance.
+     * @return DataStorageTableInterface The updated table instance.
      */
     public function delete_row_where($where_condition): DataStorageTableInterface;
 }

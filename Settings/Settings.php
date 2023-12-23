@@ -2,8 +2,6 @@
 
 namespace Settings;
 
-use Debug\Debug;
-
 /**
  * Settings
  *

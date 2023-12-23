@@ -22,16 +22,17 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return FileStorage::get_queried_data();
     }
 
-    public function get_cell_where(string $return_column, string ...$where_condition): mixed
+    public function get_cell_where(string $return_column, string ...$where_condition)
     {
         $where_conditions = implode(" AND ", $where_condition);
         FileStorage::query(
             table: $this->name,
             where_condition: $where_conditions,
             column: $return_column,
-            command: 'get'
+            command: 'get',
+            error_level: null
         );
-        return FileStorage::get_queried_data()[$return_column];
+        return FileStorage::get_queried_data()[0][$return_column] ?? null;
     }
 
     public function get_any_row_where(?string ...$where_condition): array

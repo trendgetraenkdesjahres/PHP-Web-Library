@@ -65,6 +65,12 @@ class FileStorage implements DataStorageInterface
      */
     public static function table_exists(string $table, ?string $throwable = null): bool
     {
+        if (!self::$data) {
+            if ($throwable) {
+                throw new $throwable("DataStorage is empty.");
+            }
+            return false;
+        }
         if (!key_exists($table, self::$data)) {
             if ($throwable) {
                 throw new $throwable("Table '$table' does not exist");
@@ -85,7 +91,7 @@ class FileStorage implements DataStorageInterface
      */
     public static function table_element_exists(string $table, ?string $column = null, ?string $row = null, ?string $throwable = null): bool
     {
-        if (!key_exists($table, self::$data)) {
+        if (!self::table_exists($table, $throwable)) {
             if ($throwable) {
                 throw new $throwable("Table '$table' does not exist");
             }
@@ -140,13 +146,18 @@ class FileStorage implements DataStorageInterface
      */
     public static function create_table(string $table, TableColumn ...$columns): bool
     {
-        if (key_exists($table, self::$data)) {
-            Warning::trigger("'$table' already exists. Not created.");
-            return false;
-        }
-        //meta table-info table
-        if (!key_exists('%tables', self::$data)) {
-            new FileTable('%tables', true);
+        if (self::$data) {
+            if (key_exists($table, self::$data)) {
+                Warning::trigger("'$table' already exists. Not created.");
+                return false;
+            }
+
+            //meta table-info table
+            if (!key_exists('%tables', self::$data)) {
+                new FileTable('%tables', true);
+            }
+        } else {
+            self::$data = [];
         }
 
         self::$data[$table] = [];
@@ -186,7 +197,7 @@ class FileStorage implements DataStorageInterface
                 && (!$column_property['nullable']
                     && !$column_property['timestamp'])
             ) {
-                throw new \Error("Value for '$column_name' can't be empty in '$table'.");
+                throw new \Error("Value for '$column_name' can't be empty in the Table '$table'.");
             }
             self::is_value_in_column_allowed($table, $column_name, $key_value_pairs[$column_name], 'Error');
 
@@ -231,7 +242,7 @@ class FileStorage implements DataStorageInterface
      * @param string $command The query command ('get' or 'set').
      * @param mixed $value The value for 'set' command.
      */
-    public static function query(string $table, string $where_condition, ?string $column = null, string $command = 'get', mixed $value = null)
+    public static function query(string $table, string $where_condition, ?string $column = null, string $command = 'get', mixed $value = null, ?\throwable $error_level = null)
     {
 
         if (strpos($where_condition, " AND ")) {
@@ -246,8 +257,7 @@ class FileStorage implements DataStorageInterface
             self::$file->open_file('r+');
             self::$data = self::$file->get_memory();
         }
-
-        if (!self::table_element_exists($table, $column, throwable: 'Warning')) {
+        if (!self::table_element_exists($table, $column, throwable: $error_level)) {
             return [];
         }
         if ($column) {
@@ -353,7 +363,19 @@ class FileStorage implements DataStorageInterface
      */
     public static function get_queried_data(): mixed
     {
-        return count(self::$query_result) > 1 ? self::$query_result : self::$query_result[array_key_first(self::$query_result)];
+        if (self::$query_result) {
+            switch (count(self::$query_result)) {
+                case 0:
+                    return false;
+
+                case 1:
+                    return self::$query_result[array_key_first(self::$query_result)];
+
+                default:
+                    return self::$query_result;
+            }
+        }
+        return null;
     }
 
     /**
