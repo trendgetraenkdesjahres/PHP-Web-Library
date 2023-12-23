@@ -9,9 +9,16 @@ use Notices\Warning;
 
 abstract class Model
 {
-
     private static bool $initialized = false;
-    function __construct()
+    protected int  $id;
+
+    /**
+     * Constructor for Models,
+     * calls init_model(), which creates DB-Tables, like any other method that implements access_data()
+     *
+     * @return  void
+     */
+    public function __construct()
     {
         self::init_model();
     }
@@ -88,17 +95,24 @@ abstract class Model
 
     final static function get_instance_where(string $property_value_pair): self
     {
-        return self::array_to_instance(
-            array: self::access_data()->get_any_row_where($property_value_pair)[0]
-        );
+        try {
+            return self::array_to_instance(
+                array: self::access_data()->get_any_row_where($property_value_pair)[0]
+            );
+        } catch (\Error $error) {
+            throw new \Error("There is no '" . get_called_class() . "' where '$property_value_pair'");
+        }
     }
 
     final static function get_instance(int $id): self
     {
-        var_dump(self::access_data());
-        return self::array_to_instance(
-            array: self::access_data()->get_row($id)
-        );
+        try {
+            return self::array_to_instance(
+                array: self::access_data()->get_row($id)
+            );
+        } catch (\Error $error) {
+            throw new \Error("There is no '" . get_called_class() . "' of id=$id");
+        }
     }
 
     private static function array_to_instance(array $array): self
@@ -106,9 +120,6 @@ abstract class Model
         $reflection = new \ReflectionClass(get_called_class());
         $object = $reflection->newInstanceWithoutConstructor();
         foreach ($array as $property => $value) {
-            if ($property === 'id') {
-                continue;
-            }
             if (!$reflection->hasProperty($property)) {
                 throw new \Error("'" . get_called_class() . "' has no property named '$property'");
             }

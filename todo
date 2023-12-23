@@ -1,4 +1,4 @@
-
+rewrite File Query (viel zu lange methode :())
 rewrite DataStorage with traits for File & DB
 rewrite DataStorageTable with traits for File & DB
 

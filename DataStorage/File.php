@@ -313,6 +313,9 @@ class FileStorage implements DataStorageInterface
                         }
                         foreach ($ids as $i => $id) {
                             foreach ($columns as $column) {
+                                if (!isset(self::$data[$table][$column][$id])) {
+                                    throw new \Error("id=$id in '$table' is not set.");
+                                }
                                 self::$query_result[$i][$column] = self::$data[$table][$column][$id];
                             }
                             if (count(self::$query_result[$i]) > 1) {
