@@ -3,7 +3,7 @@ rewrite DataStorage with traits for File & DB
 rewrite DataStorageTable with traits for File & DB
 
 add META-Table Support
-add class loader
+add class loader (Helperclasses/index.php)
 repair error-displaying
 add html-error displaying
 add json-error displaying
