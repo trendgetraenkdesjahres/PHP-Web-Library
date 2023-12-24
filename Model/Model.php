@@ -10,7 +10,6 @@ use Notices\Warning;
 abstract class Model
 {
     private static bool $initialized = false;
-    protected int  $id;
 
     /**
      * Constructor for Models,
