@@ -5,6 +5,7 @@ namespace Model;
 use DataStorage\DataStorage;
 use DataStorage\DataStorageTableInterface;
 use DataStorage\TableColumn;
+use Debug\Debug;
 use Notices\Warning;
 
 abstract class Model
@@ -89,14 +90,16 @@ abstract class Model
      */
     final static function get_value_where(string $property, string ...$property_value_pairs): mixed
     {
-        return self::access_data()->get_cell_where($property, ...$property_value_pairs);
+        return self::access_data()
+            ->get_cell_where($property, ...$property_value_pairs);
     }
 
     final static function get_instance_where(string $property_value_pair): self
     {
         try {
             return self::array_to_instance(
-                array: self::access_data()->get_any_row_where($property_value_pair)[0]
+                array: self::access_data()
+                    ->get_any_row_where($property_value_pair)[0]
             );
         } catch (\Error $error) {
             throw new \Error("There is no '" . get_called_class() . "' where '$property_value_pair'");
@@ -106,12 +109,12 @@ abstract class Model
     final static function get_instance(int $id): self
     {
         try {
-            return self::array_to_instance(
-                array: self::access_data()->get_row($id)
-            );
+            $array = self::access_data()
+                ->get_row($id);
         } catch (\Error $error) {
             throw new \Error("There is no '" . get_called_class() . "' of id=$id");
         }
+        return self::array_to_instance($array);
     }
 
     private static function array_to_instance(array $array): self
@@ -119,6 +122,9 @@ abstract class Model
         $reflection = new \ReflectionClass(get_called_class());
         $object = $reflection->newInstanceWithoutConstructor();
         foreach ($array as $property => $value) {
+            if ($property === 'id') {
+                continue;
+            }
             if (!$reflection->hasProperty($property)) {
                 throw new \Error("'" . get_called_class() . "' has no property named '$property'");
             }
