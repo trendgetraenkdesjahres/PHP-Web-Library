@@ -22,7 +22,8 @@ class Debug
             replace: '',
             subject: $caller['file']
         );
-        $this->method   = $caller['class'] . $caller['type'] . $caller['function'];
+        $class = (new \ReflectionClass($caller['class']))->getShortName();
+        $this->method   = $class . $caller['type'] . $caller['function'];
         $this->location = $caller_location . ":{$caller['line']}";
 
         $this->expression_type      = ($type = gettype($expression)) == 'object' ? get_class($expression) : $type;
@@ -72,6 +73,48 @@ class Debug
 
     private function print_html_var(): void
     {
-        print "<pre>" . var_export($this->expression_value, true) . "</pre>";
+        $var_content = Type::construct($this->expression_value);
+        $title = new StringType("$this->method(<code>$this->expression_type</code>)");
+        if ($this->expression_type == 'string') {
+            $expression = new StringType((string)$var_content);
+            $string_length = $expression->get_length();
+            $expression->replace(PHP_EOL, '¶' . PHP_EOL)->word_wrap(80)->surround('`')->append("($string_length)");
+        } else {
+            $expression = new StringType((string) $var_content);
+        }
+        $css_style = "
+        details {
+            position: sticky;
+            width: max-content;
+            padding: 0.5em 1em;
+        }
+
+        details summary > * {
+            display: inline-block;
+        }
+
+        details summary {
+            cursor: pointer;
+        }
+
+        details figure {
+            background-color: rgba(0,0,0, 0.05);
+            margin: 0;
+            padding: 0.5em;
+            display: grid;
+            grid-template-rows: 0fr;
+            transition: grid-template-rows 500ms;
+        }
+
+        details[open] figure {
+            grid-template-rows: 1fr;
+        }
+
+        details figure pre {
+            overflow: hidden;
+            margin: 0;
+        }
+        ";
+        print "<style>$css_style</style><details><summary><div>$this->location<b> $title</b></div></summary><figure><pre>$expression</pre><figcaption><small></small></figcaption></figure></details>";
     }
 }
