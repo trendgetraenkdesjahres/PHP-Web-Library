@@ -2,6 +2,7 @@
 
 namespace DataStorage;
 
+use Debug\Debug;
 use Notices\Warning;
 use Settings\Settings;
 use System\FileHandle;
@@ -366,19 +367,19 @@ class FileStorage implements DataStorageInterface
      */
     public static function get_queried_data(): mixed
     {
-        if (self::$query_result) {
-            switch (count(self::$query_result)) {
-                case 0:
-                    return false;
+        return self::$query_result;
+    }
 
-                case 1:
-                    return self::$query_result[array_key_first(self::$query_result)];
 
-                default:
-                    return self::$query_result;
-            }
-        }
-        return null;
+    /**
+     * Method count_queried_data
+     *
+     * @return int
+     */
+    public static function count_queried_data(): int
+    {
+        // TODO auch in db variante implementieren & ins interface
+        return count(self::$query_result);
     }
 
     /**

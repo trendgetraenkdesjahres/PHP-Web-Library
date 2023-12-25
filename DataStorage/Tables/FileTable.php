@@ -2,6 +2,8 @@
 
 namespace DataStorage;
 
+use Debug\Debug;
+
 /**
  * FileTable is a concrete implementation of DataStorageTable for file-based tables.
  */

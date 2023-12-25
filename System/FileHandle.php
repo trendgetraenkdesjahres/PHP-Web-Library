@@ -2,6 +2,7 @@
 
 namespace System;
 
+use Debug\Debug;
 use Notices\Warning;
 
 class FileHandle
@@ -32,6 +33,7 @@ class FileHandle
         if ($this->lock_file) {
             while (!@mkdir($this->path . ".lock")) {
                 usleep($microseconds_freq);
+                // TODO limit einstellen
             }
         }
         if (!$this->file_handle = fopen($this->path, $fopen_mode)) {
@@ -60,6 +62,7 @@ class FileHandle
 
     public function write_file(mixed $data): FileHandle
     {
+        var_dump($data);
         rewind($this->file_handle);
         if (!fwrite($this->file_handle, serialize($data))) {
             $type = get_resource_type($this->file_handle);
