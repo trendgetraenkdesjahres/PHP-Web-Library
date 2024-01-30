@@ -1,40 +1,17 @@
 <?php
 
-namespace DataStorage;
+namespace Library\DataStorage;
 
-use Settings\Settings;
-
-require_once 'Tables/Table.php';
-require_once 'Database.php';
-require_once 'File.php';
-
-
-
-/**
- * DataStorageInterface defines the contract for DataStorage classes.
- */
-interface DataStorageInterface
-{
-    public static function initalize(): bool;
-    public static function create_table(string $table, TableColumn ...$columns): bool;
-    public static function get_queried_data(): mixed;
-    public static function get_table(string $table_name): DataStorageTableInterface;
-    public static function table_exists(string $table_name): bool;
-}
+use Library\DataStorage\Table\Table;
+use Library\DataStorage\Table\TableColumn;
+use Library\Settings\Settings;
 
 /**
  * DataStorage is a factory class for creating DataStorageTable instances.
  */
-class DataStorage
+abstract class DataStorage implements DataStorageInterface
 {
-    /**
-     * Get a table instance by name.
-     *
-     * @param string $name The name of the table.
-     * @return DataStorageTableInterface The table instance.
-     * @throws \Error If no suitable configuration for Filebased or DBbased setting is found.
-     */
-    public static function get_table(string $name): DataStorageTableInterface
+    public static function get_table(string $name): Table
     {
         if (Settings::get('datastorage/database_name')) {
             if (DatabaseStorage::initalize()) {
@@ -49,14 +26,7 @@ class DataStorage
         }
     }
 
-    /**
-     * Create a table instance based on the specified name and columns.
-     *
-     * @param string $name The name of the table.
-     * @param TableColumn ...$columns Variable-length list of TableColumn objects representing table columns.
-     * @return DataStorageTableInterface The created table instance.
-     * @throws \Error If no suitable configuration for 'datastorage/database_name' or 'datastorage/file_name' is found.
-     */
+    // TODO HALLOOO!!! hier ist factory u nicht implementierung
     public static function create_table(string $name, TableColumn ...$columns): void
     {
         if (Settings::get('datastorage/database_name')) {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace Library\Types;
 
 use Traversable;
 use ArrayIterator;

@@ -1,10 +1,10 @@
 <?php
 
-namespace APIClients;
+namespace Library\APIClients;
 
 use \CurlHandle;
-use Notices\Notice;
-use Notices\Warning;
+use Library\Notices\Notice;
+use Library\Notices\Warning;
 
 class APIClient
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace Library\Types;
 
 /**
  * NULLType represents a class for handling NULL values.

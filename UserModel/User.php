@@ -1,9 +1,8 @@
 <?php
 
-namespace UserManagement;
+namespace Library\UserModel;
 
-use Debug\Debug;
-use Model\Model;
+use Library\Model\Model;
 
 class User extends Model
 {

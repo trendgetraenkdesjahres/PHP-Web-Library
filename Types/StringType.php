@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace Library\Types;
 
 /**
  * StringType represents a string manipulation class designed to extend and enhance PHP's string handling capabilities.

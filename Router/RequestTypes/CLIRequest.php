@@ -1,6 +1,9 @@
 <?php
 
-namespace Router;
+namespace Library\Router\RequestTypes;
+
+use Library\Router\Request;
+use Library\Router\RequestInterface;
 
 /**
  * CLIRequest is a specialized class for handling command-line interface (CLI) requests.

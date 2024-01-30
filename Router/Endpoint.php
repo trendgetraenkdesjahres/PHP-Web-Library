@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace Library\Router;
 
 class Endpoint
 {

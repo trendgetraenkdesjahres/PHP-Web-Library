@@ -1,17 +1,18 @@
 <?php
 
-namespace DataStorage;
+namespace Library\DataStorage\Traits;
 
-use Debug\Debug;
-use Notices\Warning;
-use Settings\Settings;
-use System\FileHandle;
-
+use Library\DataStorage\Table\FileTable;
+use Library\DataStorage\Table\TableColumn;
+use Library\DataStorage\Table\TableInterface;
+use Library\Notices\Warning;
+use Library\Settings\Settings;
+use Library\System\FileHandle;
 
 /**
  * FileStorage is a class that handles data storage using files.
  */
-class FileStorage implements DataStorageInterface
+trait File
 {
     protected static mixed $data;
     private static FileHandle $file;
@@ -388,7 +389,7 @@ class FileStorage implements DataStorageInterface
      * @param string $table_name The name of the table.
      * @return FileTable The table instance.
      */
-    public static function get_table(string $table_name): DataStorageTableInterface
+    public static function get_table(string $table_name): TableInterface
     {
         return new FileTable($table_name, false);
     }

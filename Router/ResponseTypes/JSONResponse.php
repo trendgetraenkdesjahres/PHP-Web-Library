@@ -1,6 +1,9 @@
 <?php
 
-namespace Router;
+namespace Library\Router\ResponseTypes;
+
+use Library\Router\Response;
+use Library\Router\ResponseInterface;
 
 /**
  * JSONResponse is a specialized class for handling JSON responses.

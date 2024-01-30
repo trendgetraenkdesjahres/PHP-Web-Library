@@ -1,8 +1,8 @@
 <?php
 
-namespace Notices;
+namespace Library\Notices;
 
-use Types\StringType;
+use Library\Types\StringType;
 
 class Warning extends Notice
 {

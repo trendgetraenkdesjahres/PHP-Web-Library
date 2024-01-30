@@ -1,8 +1,6 @@
 <?php
 
-namespace Router;
-
-use Throwable;
+namespace Library\Router;
 
 /**
  * ResponseInterface defines the methods that should be implemented by response classes.
@@ -40,7 +38,7 @@ class Response
         if ($request->get_resource_path()) {
             try {
                 call_user_func([$this, 'set_body_source']);
-            } catch (Throwable $e) {
+            } catch (\Throwable $e) {
                 throw new \Error(
                     get_class($this) . "->set_body_source() must be declared to handle a '" . get_class($request) . "'."
                 );

@@ -1,8 +1,6 @@
 <?php
 
-namespace Types;
-
-use Types\ObjectType;
+namespace Library\Types;
 
 /**
  * ArrayType represents a class for handling array values.

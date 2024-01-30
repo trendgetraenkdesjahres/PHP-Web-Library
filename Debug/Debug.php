@@ -1,9 +1,9 @@
 <?php
 
-namespace Debug;
+namespace Library\Debug;
 
-use Types\StringType;
-use Types\Type;
+use Library\Types\StringType;
+use Library\Types\Type;
 
 class Debug
 {

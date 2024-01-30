@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace Library\Router;
 
 require_once 'Response.php';
 require_once 'Request.php';

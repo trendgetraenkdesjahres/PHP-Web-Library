@@ -1,12 +1,11 @@
 <?php
 
-namespace Model;
+namespace Library\Model;
 
-use DataStorage\DataStorage;
-use DataStorage\DataStorageTableInterface;
-use DataStorage\TableColumn;
-use Debug\Debug;
-use Notices\Warning;
+use Library\DataStorage\DataStorage;
+use Library\DataStorage\DataStorageTableInterface;
+use Library\DataStorage\TableColumn;
+use Library\Notices\Warning;
 
 abstract class Model
 {

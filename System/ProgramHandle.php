@@ -1,10 +1,9 @@
 <?php
 
-namespace System;
+namespace Library\System;
 
-use Debug\Debug;
-use Notices\Notice;
-use Notices\Warning;
+use Library\Notices\Notice;
+use Library\Notices\Warning;
 
 
 /**

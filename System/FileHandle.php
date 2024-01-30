@@ -1,9 +1,8 @@
 <?php
 
-namespace System;
+namespace Library\System;
 
-use Debug\Debug;
-use Notices\Warning;
+use Library\Notices\Warning;
 
 class FileHandle
 {

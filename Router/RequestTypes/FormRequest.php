@@ -1,6 +1,9 @@
 <?php
 
-namespace Router;
+namespace Library\Router\RequestTypes;
+
+use Library\Router\Request;
+use Library\Router\RequestInterface;
 
 /**
  * FormRequest is a specialized class for handling form submissions.

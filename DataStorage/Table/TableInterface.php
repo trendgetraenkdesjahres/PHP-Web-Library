@@ -1,14 +1,11 @@
 <?php
 
-namespace DataStorage;
-
-require_once "DatabaseTable.php";
-require_once "FileTable.php";
+namespace Library\DataStorage\Table;
 
 /**
  * DataStorageTableInterface defines the contract for DataStorageTable classes.
  */
-interface DataStorageTableInterface
+interface TableInterface
 {
     /**
      * Get the name of the table.
@@ -52,7 +49,7 @@ interface DataStorageTableInterface
      */
     public function get_related_cell(
         int $id,
-        DataStorageTable $related_table,
+        Table $related_table,
         string $related_return_column,
     ): mixed;
 
@@ -65,7 +62,7 @@ interface DataStorageTableInterface
      * @return mixed The related cell value.
      */
     public function get_related_cell_where(
-        DataStorageTable $related_table,
+        Table $related_table,
         string $related_return_column,
         string ...$where_condition,
     ): mixed;
@@ -76,7 +73,7 @@ interface DataStorageTableInterface
      * @param array $key_value_pairs An array of key-value pairs for the new row.
      * @return DataStorageTableInterface The updated table instance.
      */
-    public function add_row(array $key_value_pairs): DataStorageTableInterface;
+    public function add_row(array $key_value_pairs): TableInterface;
 
     /**
      * Set the value of a cell in a row by ID.
@@ -86,7 +83,7 @@ interface DataStorageTableInterface
      * @param mixed $value The new value.
      * @return DataStorageTableInterface The updated table instance.
      */
-    public function set_cell(int $id, string $column, mixed $value): DataStorageTableInterface;
+    public function set_cell(int $id, string $column, mixed $value): TableInterface;
 
     /**
      * Set the value of a cell based on WHERE conditions.
@@ -96,7 +93,7 @@ interface DataStorageTableInterface
      * @param mixed $where_condition The WHERE condition.
      * @return DataStorageTableInterface The updated table instance.
      */
-    public function set_cell_where(string $column, mixed $value, $where_condition): DataStorageTableInterface;
+    public function set_cell_where(string $column, mixed $value, $where_condition): TableInterface;
 
     /**
      * Delete a row by its ID.
@@ -104,7 +101,7 @@ interface DataStorageTableInterface
      * @param int $id The ID of the row to delete.
      * @return DataStorageTableInterface The updated table instance.
      */
-    public function delete_row(int $id): DataStorageTableInterface;
+    public function delete_row(int $id): TableInterface;
 
     /**
      * Delete rows based on WHERE conditions.
@@ -112,39 +109,5 @@ interface DataStorageTableInterface
      * @param mixed $where_condition The WHERE condition.
      * @return DataStorageTableInterface The updated table instance.
      */
-    public function delete_row_where($where_condition): DataStorageTableInterface;
-}
-
-class DataStorageTable
-{
-    public function __construct(public string $name)
-    {
-    }
-}
-
-/**
- * TableColumn represents a table column with its properties.
- */
-class TableColumn
-{
-    public string $name;
-
-    /**
-     * Constructor for TableColumn.
-     *
-     * @param string $name The column name.
-     * @param string $type The data type of the column.
-     * @param int|null $length The maximum length of the column (if applicable).
-     * @param bool $nullable Whether the column is nullable.
-     * @param bool $timestamp Whether the column is a timestamp.
-     */
-    public function __construct(
-        string $name,
-        public string $type = 'string',
-        public ?int $length = null,
-        public bool $nullable = false,
-        public bool $timestamp = false
-    ) {
-        $this->name = trim($name);
-    }
+    public function delete_row_where($where_condition): TableInterface;
 }

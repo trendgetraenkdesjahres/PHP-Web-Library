@@ -1,10 +1,10 @@
 <?php
 
-namespace APIClients;
+namespace Library\APIClients;
 
-use APIClients\APIClient;
-use Notices\Warning;
-use Settings\Settings;
+use Library\APIClients\APIClient;
+use Library\Notices\Warning;
+use Library\Settings\Settings;
 
 class SecureAPIClient extends APIClient
 {

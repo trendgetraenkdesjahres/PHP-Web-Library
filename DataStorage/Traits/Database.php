@@ -1,19 +1,16 @@
 <?php
 
-namespace DataStorage;
+namespace Library\DataStorage\Traits;
 
-use Notices\Warning;
-use Settings\Settings;
-use PDO;
-use PDOStatement;
+use Library\DataStorage\Table\DatabaseTable;
+use Library\DataStorage\Table\TableColumn;
+use Library\Notices\Warning;
+use Library\Settings\Settings;
 
-/**
- * DatabaseStorage is a class that handles database storage using PDO.
- */
-class DatabaseStorage implements DataStorageInterface
+trait Database
 {
     private static $pdo;
-    private static PDOStatement $result;
+    private static \PDOStatement $result;
 
     /**
      * Initialize the database connection.
@@ -43,12 +40,12 @@ class DatabaseStorage implements DataStorageInterface
         $dns .= ";port=$port";
         $dns .= ";charset=$charset";
         $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES   => false,
         ];
         try {
-            $pdo = new PDO(
+            $pdo = new \PDO(
                 $dns,
                 $username,
                 $password,
@@ -126,7 +123,7 @@ class DatabaseStorage implements DataStorageInterface
      * @param int $mode The PDO fetch mode.
      * @return mixed The queried data.
      */
-    public static function get_queried_data(int $mode = PDO::FETCH_DEFAULT): mixed
+    public static function get_queried_data(int $mode = \PDO::FETCH_DEFAULT): mixed
     {
         return self::$result->fetchAll($mode);
     }
@@ -152,7 +149,7 @@ class DatabaseStorage implements DataStorageInterface
      * @param string $table_name The name of the table.
      * @return DatabaseTable The table instance.
      */
-    public static function get_table(string $table_name): DataStorageTableInterface
+    public static function get_table(string $table_name): DatabaseTable
     {
         return new DatabaseTable($table_name);
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace Notices;
+namespace Library\Notices;
 
 class Notice extends \Exception
 {

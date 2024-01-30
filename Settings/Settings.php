@@ -1,6 +1,6 @@
 <?php
 
-namespace Settings;
+namespace Library\Settings;
 
 /**
  * Settings

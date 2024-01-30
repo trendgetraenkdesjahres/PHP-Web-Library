@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace Library\Router;
 
 /**
  * RequestInterface defines the methods that should be implemented by request classes.
