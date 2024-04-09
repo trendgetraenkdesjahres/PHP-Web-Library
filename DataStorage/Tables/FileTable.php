@@ -1,8 +1,9 @@
 <?php
 
-namespace DataStorage;
+namespace  PHP_Library\DataStorage\Tables;
 
 use Debug\Debug;
+use PHP_Library\DataStorage\FileStorage;
 
 /**
  * FileTable is a concrete implementation of DataStorageTable for file-based tables.

@@ -1,9 +1,9 @@
 <?php
 
-namespace DataStorage;
+namespace  PHP_Library\DataStorage;
 
-use Notices\Warning;
-use Settings\Settings;
+use  PHP_Library\Notices\Warning;
+use  PHP_Library\Settings\Settings;
 use PDO;
 use PDOStatement;
 
@@ -142,7 +142,7 @@ class DatabaseStorage implements DataStorageInterface
         try {
             self::$result = self::$pdo->query($sql_query);
         } catch (\Throwable $e) {
-            Warning::trigger($e->getMessage());
+            PHP_Library\Warning::trigger($e->getMessage());
         }
     }
 

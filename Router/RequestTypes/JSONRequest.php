@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace  PHP_Library\Router\RequestTypes;
 
 /**
  * JSONRequest is a specialized class for handling HTTP requests that expect JSON responses.

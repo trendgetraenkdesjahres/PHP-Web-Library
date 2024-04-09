@@ -1,6 +1,6 @@
 <?php
 
-namespace UserManagement;
+namespace  PHP_Library\UserManagement;
 
 use Debug\Debug;
 use Model\Model;

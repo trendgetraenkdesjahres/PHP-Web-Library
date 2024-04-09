@@ -1,10 +1,9 @@
 <?php
 
-namespace APIClients;
+namespace PHP_Library\APIClients;
 
-use APIClients\APIClient;
-use Notices\Warning;
-use Settings\Settings;
+use PHP_Library\Notices\Warning;
+use PHP_Library\Settings\Settings;
 
 class SecureAPIClient extends APIClient
 {
@@ -37,7 +36,7 @@ class SecureAPIClient extends APIClient
         if (isset($response['access_token'])) {
             return $response['access_token'];
         };
-        Warning::trigger("Could not receive access_token at $token_url for $user");
+        PHP_Library\Warning::trigger("Could not receive access_token at $token_url for $user");
         return false;
     }
 }

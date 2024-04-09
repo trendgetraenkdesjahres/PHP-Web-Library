@@ -1,12 +1,12 @@
 <?php
 
-namespace Model;
+namespace  PHP_Library\Model;
 
-use DataStorage\DataStorage;
-use DataStorage\DataStorageTableInterface;
-use DataStorage\TableColumn;
-use Debug\Debug;
-use Notices\Warning;
+use  PHP_Library\DataStorage\DataStorage;
+use  PHP_Library\DataStorage\DataStorageTableInterface;
+use  PHP_Library\DataStorage\TableColumn;
+use  PHP_Library\Debug\Debug;
+use  PHP_Library\Notices\Warning;
 
 abstract class Model
 {
@@ -40,7 +40,7 @@ abstract class Model
     {
         $class = get_called_class();
         if (!DataStorage::table_exists($class)) {
-            Warning::trigger("'" . $class . "' has no table yet. will create one");
+            PHP_Library\Warning::trigger("'" . $class . "' has no table yet. will create one");
             self::create_table($class);
         }
         self::$initialized = true;

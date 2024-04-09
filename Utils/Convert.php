@@ -1,6 +1,6 @@
 <?php
 
-namespace Utils;
+namespace  PHP_Library\Utils;
 
 class Convert
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace  PHP_Library\Router\ResponseTypes;
 
 /**
  * CLIResponse is a specialized class for handling responses in the command-line interface (CLI).

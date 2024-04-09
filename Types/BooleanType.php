@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace  PHP_Library\Types;
 
 /**
  * BooleanType represents a class for handling boolean values.

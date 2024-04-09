@@ -1,8 +1,8 @@
 <?php
 
-namespace DataStorage;
+namespace  PHP_Library\DataStorage;
 
-use Settings\Settings;
+use  PHP_Library\Settings\Settings;
 
 require_once 'Tables/Table.php';
 require_once 'Database.php';

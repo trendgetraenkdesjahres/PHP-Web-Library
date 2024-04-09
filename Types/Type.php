@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace  PHP_Library\Types;
 
 /**
  * TypeInterface is an interface for custom types.

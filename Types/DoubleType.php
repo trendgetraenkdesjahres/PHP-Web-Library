@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace  PHP_Library\Types;
 
 /**
  * DoubleType represents a class for handling integer values.

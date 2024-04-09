@@ -1,6 +1,6 @@
 <?php
 
-namespace DataStorage;
+namespace  PHP_Library\DataStorage\Tables;
 
 use PDO;
 

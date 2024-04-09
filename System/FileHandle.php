@@ -1,9 +1,9 @@
 <?php
 
-namespace System;
+namespace  PHP_Library\System;
 
 use Debug\Debug;
-use Notices\Warning;
+use PHP_Library\Notices\Warning;
 
 class FileHandle
 {
@@ -37,7 +37,7 @@ class FileHandle
             }
         }
         if (!$this->file_handle = fopen($this->path, $fopen_mode)) {
-            Warning::trigger("Could not fopen(filename: '{$this->path}', mode: '$fopen_mode').");
+            PHP_Library\Warning::trigger("Could not fopen(filename: '{$this->path}', mode: '$fopen_mode').");
             $this->close_file();
         }
         if ($load_file) {
@@ -66,7 +66,7 @@ class FileHandle
         rewind($this->file_handle);
         if (!fwrite($this->file_handle, serialize($data))) {
             $type = get_resource_type($this->file_handle);
-            Warning::trigger("Could not fwrite($type, \$data).");
+            PHP_Library\Warning::trigger("Could not fwrite($type, \$data).");
         }
         $this->memory = $data;
         return $this;

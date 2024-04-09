@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace  PHP_Library\Router\RequestTypes;
 
 /**
  * HTMLRequest is a specialized class for handling HTTP requests that expect HTML responses.

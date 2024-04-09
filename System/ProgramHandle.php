@@ -1,10 +1,9 @@
 <?php
 
-namespace System;
+namespace  PHP_Library\System;
 
-use Debug\Debug;
-use Notices\Notice;
-use Notices\Warning;
+use PHP_Library\Notices\Notice;
+use PHP_Library\Notices\Warning;
 
 
 /**
@@ -112,7 +111,7 @@ class ProgramHandle implements ProgramHandleInterface
      * @return ProgramHandle The modified ProgramHandle instance.
      */
 
-    public function add_option(string $flag = '', string|array $argument = '', ?string $name = null): ProgramHandle
+    public function add_option(string $flag = '', string|array $argument = '', ?string $group = null): ProgramHandle
     {
         if (!$flag && !$argument) {
             return $this;
@@ -132,8 +131,8 @@ class ProgramHandle implements ProgramHandleInterface
             $option = "$flag \"$argument\"";
         }
 
-        if ($name) {
-            $this->options[$name] = trim("$option");
+        if ($group) {
+            $this->options[$group] = trim("$option");
         } else {
             array_push($this->options, $option);
         }

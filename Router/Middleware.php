@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace  PHP_Library\Router;
 
 class Endpoint
 {
@@ -53,7 +53,7 @@ class Endpoint
             $this->target_url = $this->host . $target . ($query_parameters ? '?' . http_build_query(data: $query_parameters) : '');
             return $this;
         }
-        Warning::trigger("Neither \$target ('$target') is valid nor \$this->host is set.");
+        PHP_Library\Warning::trigger("Neither \$target ('$target') is valid nor \$this->host is set.");
         return $this;
     }
 
@@ -83,7 +83,7 @@ class Endpoint
             try {
                 $this->exec_curl($this->curl);
             } catch (Warning $e) {
-                Warning::trigger($e->getMessage());
+                PHP_Library\Warning::trigger($e->getMessage());
             }
         }
         return $this;

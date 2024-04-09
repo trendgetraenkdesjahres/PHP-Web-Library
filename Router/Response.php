@@ -1,8 +1,8 @@
 <?php
 
-namespace Router;
+namespace  PHP_Library\Router;
 
-use Throwable;
+use \Throwable;
 
 /**
  * ResponseInterface defines the methods that should be implemented by response classes.

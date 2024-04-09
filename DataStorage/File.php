@@ -1,11 +1,11 @@
 <?php
 
-namespace DataStorage;
+namespace  PHP_Library\DataStorage;
 
-use Debug\Debug;
-use Notices\Warning;
-use Settings\Settings;
-use System\FileHandle;
+use  PHP_Library\Debug\Debug;
+use  PHP_Library\Notices\Warning;
+use  PHP_Library\Settings\Settings;
+use  PHP_Library\System\FileHandle;
 
 
 /**
@@ -39,7 +39,7 @@ class FileStorage implements DataStorageInterface
             self::$data = self::$file->get_memory();
             return true;
         } catch (\Throwable $e) {
-            Warning::trigger($e->getMessage());
+            PHP_Library\Warning::trigger($e->getMessage());
             return false;
         }
     }
@@ -149,7 +149,7 @@ class FileStorage implements DataStorageInterface
     {
         if (self::$data) {
             if (key_exists($table, self::$data)) {
-                Warning::trigger("'$table' already exists. Not created.");
+                PHP_Library\Warning::trigger("'$table' already exists. Not created.");
                 return false;
             }
 
@@ -296,7 +296,7 @@ class FileStorage implements DataStorageInterface
                 }
             }
         } catch (\Throwable $e) {
-            Warning::trigger("WHERE clause is broken: '$where_condition'");
+            PHP_Library\Warning::trigger("WHERE clause is broken: '$where_condition'");
         }
 
 
@@ -325,7 +325,7 @@ class FileStorage implements DataStorageInterface
                         }
                         break;
                     default:
-                        Warning::trigger("'$command' with operant '$condition_operatant': not implmented.");
+                        PHP_Library\Warning::trigger("'$command' with operant '$condition_operatant': not implmented.");
                         break;
                 }
                 break;
@@ -345,7 +345,7 @@ class FileStorage implements DataStorageInterface
 
 
                     default:
-                        Warning::trigger("'$command' with operant '$condition_operatant': not implmented.");
+                        PHP_Library\Warning::trigger("'$command' with operant '$condition_operatant': not implmented.");
                         break;
                 }
                 break;

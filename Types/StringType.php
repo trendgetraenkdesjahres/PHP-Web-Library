@@ -1,6 +1,6 @@
 <?php
 
-namespace Types;
+namespace  PHP_Library\Types;
 
 /**
  * StringType represents a string manipulation class designed to extend and enhance PHP's string handling capabilities.
@@ -168,7 +168,7 @@ class StringType extends TypeWrap
         try {
             return $longest_line;
         } catch (\Throwable $th) {
-            new Warning($th->getMessage());
+            new PHP_Library\Warning($th->getMessage());
         }
     }
 
@@ -350,7 +350,7 @@ class StringType extends TypeWrap
             if ($padding >= 0) {
                 $padded_string .= PHP_EOL . $line_content . str_repeat(" ", $padding);
             } else {
-                Warning::trigger("Can't add $padding padding to '$line_content'");
+                PHP_Library\Warning::trigger("Can't add $padding padding to '$line_content'");
             }
         }
         $this->value = trim($padded_string, PHP_EOL);

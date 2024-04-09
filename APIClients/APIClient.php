@@ -1,10 +1,10 @@
 <?php
 
-namespace APIClients;
+namespace PHP_Library\APIClients;
 
 use \CurlHandle;
-use Notices\Notice;
-use Notices\Warning;
+use PHP_Library\Notices\Notice;
+use PHP_Library\Notices\Warning;
 
 class APIClient
 {
@@ -306,7 +306,7 @@ class APIClient
         if (is_callable($callable_filter)) {
             array_push($this->result_body_filters, $callable_filter);
         } else {
-            throw new Error("$callable_filter is not callable.");
+            throw new \Error("$callable_filter is not callable.");
         }
         return $this;
     }

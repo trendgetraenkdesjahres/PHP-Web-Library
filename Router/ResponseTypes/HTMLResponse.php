@@ -1,6 +1,6 @@
 <?php
 
-namespace Router;
+namespace  PHP_Library\Router\ResponseTypes;
 
 /**
  * HTMLResponse is a specialized class for handling HTML responses.

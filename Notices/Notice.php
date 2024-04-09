@@ -1,11 +1,11 @@
 <?php
 
-namespace Notices;
+namespace  PHP_Library\Notices;
 
 class Notice extends \Exception
 {
     /**
-     * Notice class extends the base \Exception class and handles custom notices.
+     * Notice class extends the base \Exception class and handles custom PHP_Library\Notices.
      */
 
     private static $initialized = false;
@@ -26,7 +26,7 @@ class Notice extends \Exception
     }
 
     /**
-     * Initialize the custom error handler for handling user notices and warnings.
+     * Initialize the custom error handler for handling user PHP_Library\Notices and PHP_Library\Warnings.
      * This method sets up a custom error handler for E_USER_WARNING and E_USER_NOTICE.
      */
     private static function initialize()

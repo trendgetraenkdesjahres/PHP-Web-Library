@@ -1,19 +1,19 @@
 <?php
 
-namespace Notices;
+namespace  PHP_Library\Notices;
 
 use Types\StringType;
 
 class Warning extends Notice
 {
     /**
-     * Warning class extends the Notice class and handles custom warnings.
+     * PHP_Library\Warning class extends the Notice class and handles custom PHP_Library\Warnings.
      */
 
     /**
-     * Constructor for the Warning class.
+     * Constructor for the PHP_Library\Warning class.
      *
-     * @param string $message The warning message to be associated with this warning.
+     * @param string $message The PHP_Library\Warning message to be associated with this PHP_Library\Warning.
      */
     public function __construct(string $message)
     {
@@ -21,9 +21,9 @@ class Warning extends Notice
     }
 
     /**
-     * Trigger a custom warning with a message and additional information.
+     * Trigger a custom PHP_Library\Warning with a message and additional information.
      *
-     * @param string $message The warning message to display.
+     * @param string $message The PHP_Library\Warning message to display.
      */
     public static function trigger(string $message)
     {
