@@ -42,9 +42,9 @@ class ProgramHandle implements ProgramHandleInterface
      *
      * @param string $file_pattern The glob pattern for source files.
      * @param string $input_flag The input flag for the source files.
-     * @return ProgramHandle The modified ProgramHandle instance.
+     * @return static The modified ProgramHandle instance.
      */
-    public function set_source_files(string $file_pattern, string $source_flag = 'i'): ProgramHandle
+    public function set_source_files(string $file_pattern, string $source_flag = 'i'): static
     {
         $files = glob($file_pattern);
         if (is_array($files)) {
@@ -53,7 +53,7 @@ class ProgramHandle implements ProgramHandleInterface
                     return realpath($file);
                 }, $files);
                 $this->add_option(
-                    name: "sources",
+                    group: "sources",
                     flag: $source_flag,
                     argument: $cleaned_files
                 );
@@ -72,12 +72,12 @@ class ProgramHandle implements ProgramHandleInterface
      *
      * @param string $source.
      * @param string $input_flag The input flag for the source.
-     * @return ProgramHandle The modified ProgramHandle instance.
+     * @return static The modified ProgramHandle instance.
      */
-    public function set_source(string $source, string $source_flag = ''): ProgramHandle
+    public function set_source(string $source, string $source_flag = ''): static
     {
         $this->add_option(
-            name: "sources",
+            group: "sources",
             flag: $source_flag,
             argument: $source
         );
@@ -90,12 +90,12 @@ class ProgramHandle implements ProgramHandleInterface
      * Set the destination file for the command.
      *
      * @param string $filename The destination filename.
-     * @return ProgramHandle The modified ProgramHandle instance.
+     * @return static The modified ProgramHandle instance.
      */
-    public function set_destination_file(string $filename, string $destination_flag = ''): ProgramHandle
+    public function set_destination_file(string $filename, string $destination_flag = ''): static
     {
         $this->add_option(
-            name: "destination",
+            group: "destination",
             flag: $destination_flag,
             argument: $filename
         );
@@ -108,10 +108,10 @@ class ProgramHandle implements ProgramHandleInterface
      * @param string $flag The flag for the option.
      * @param string|array $argument The argument for the option.
      * @param string|null $name The name of the option.
-     * @return ProgramHandle The modified ProgramHandle instance.
+     * @return static The modified ProgramHandle instance.
      */
 
-    public function add_option(string $flag = '', string|array $argument = '', ?string $group = null): ProgramHandle
+    public function add_option(string $flag = '', string|array $argument = '', ?string $group = null): static
     {
         if (!$flag && !$argument) {
             return $this;
@@ -146,8 +146,9 @@ class ProgramHandle implements ProgramHandleInterface
      * @param string $flag The flag for the option.
      * @param callable $value_callback The callback function to generate the option value.
      *                                The function should accept the current ProgramHandle instance and return a string.
+     * @return static The modified ProgramHandle instance.
      */
-    public function add_dynamic_option(string $flag = '', callable $callback): ProgramHandle
+    public function add_dynamic_option(string $flag = '', callable $callback): static
     {
         $reflection = new \ReflectionFunction($callback);
         if ($reflection->getReturnType() != 'string') {
@@ -200,9 +201,9 @@ class ProgramHandle implements ProgramHandleInterface
     /**
      * Execute the command and capture the result.
      *
-     * @return ProgramHandle The modified ProgramHandle instance.
+     * @return static The modified ProgramHandle instance.
      */
-    public function execute(): ProgramHandle
+    public function execute(): static
     {
         $this->result_line = exec(
             command: $this->get_execute_string(),

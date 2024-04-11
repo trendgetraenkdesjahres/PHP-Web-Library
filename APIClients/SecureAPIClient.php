@@ -2,7 +2,6 @@
 
 namespace PHP_Library\APIClients;
 
-use PHP_Library\Notices\Warning;
 use PHP_Library\Settings\Settings;
 
 class SecureAPIClient extends APIClient
