@@ -5,6 +5,7 @@ include 'Autoload.php';
 use AjaxHandler\AjaxScript;
 use Element\Element;
 use PHP_Library\Autoload;
+use PHP_Library\SMTPClient\SMTP_Client;
 
 $autoload = new Autoload();
 $autoload->init();
