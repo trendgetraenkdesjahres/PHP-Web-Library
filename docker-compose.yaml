@@ -1,0 +1,11 @@
+services:
+  php:
+    image: php:apache
+    ports:
+      - 8080:80
+    volumes:
+      - ./:/var/www/html
+      - ./vhost.conf:/etc/apache2/sites-available/000-default.conf
+    command: >
+      bash -c "a2enmod rewrite &&
+               apache2-foreground"

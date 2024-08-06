@@ -6,13 +6,14 @@ class Autoload
 {
     private static string $namespace = __NAMESPACE__;
 
-    private static string $includes_dir = 'inc/';
-    private static string $framework_dir = 'inc/framework/';
+    private static string $includes_dir = '';
+    private static string $framework_dir = '/framework/';
 
     public static function init()
     {
         spl_autoload_register(function ($class) {
             if (!self::is_class_in_namespace($class)) {
+                $class = str_replace("\\", DIRECTORY_SEPARATOR, $class);
                 include self::$includes_dir . $class . '.php';
                 return false;
             }

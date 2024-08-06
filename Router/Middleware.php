@@ -2,7 +2,7 @@
 
 namespace  PHP_Library\Router;
 
-class Endpoint
+class Middleware
 {
 
     private array $registred_data_keys = [];
