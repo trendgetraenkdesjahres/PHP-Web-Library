@@ -155,7 +155,7 @@ class ClassAutoloader
      * @param string $class_name The class name with namespace separators.
      * @return string The class name with directory separators.
      */
-    private function replace_class_seperator(string $class_name): string
+    private static function replace_class_seperator(string $class_name): string
     {
         return str_replace("\\", DIRECTORY_SEPARATOR, $class_name);
     }
