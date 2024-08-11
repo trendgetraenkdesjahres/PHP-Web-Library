@@ -329,14 +329,21 @@ class APIClient
     }
 
     /**
-     * Get the response body, making an HTTP GET request if needed.
+     * Get the response body, making an HTTP request if needed.
      *
      * @return array|string|false The response data or false if an error occurred.
      */
-    public function get_response_body(): array|string|false
+    public function get_response_body(string $http_method = 'get'): array|string|false
     {
         if (!$this->curl_response_body) {
-            $this->http_get();
+            if ($http_method === 'get') {
+                $this->http_get();
+            }
+            if ($http_method === 'post') {
+                $this->http_post();
+            } else {
+                throw new \Error("'{$http_method}' is not a http method.");
+            }
         }
         if ($this->curl_response_body) {
             return $this->curl_response_body;

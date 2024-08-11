@@ -2,18 +2,22 @@
 
 namespace  PHP_Library\System;
 
-use Debug\Debug;
 use PHP_Library\Notices\Warning;
 
 class FileHandle
 {
+    public string $path;
+    public string $name;
+    private bool $lock_file;
+
     private mixed $file_handle = null;
     private mixed $memory = null;
 
-    public function __construct(
-        public string $path,
-        private bool $lock_file = true,
-    ) {
+    public function __construct(string $path, bool $lock_file = true)
+    {
+        $path = realpath($path);
+        $this->name = pathinfo($path, PATHINFO_BASENAME);
+        $this->lock_file = $lock_file;
     }
 
     public function __destruct()
@@ -37,7 +41,7 @@ class FileHandle
             }
         }
         if (!$this->file_handle = fopen($this->path, $fopen_mode)) {
-            PHP_Library\Warning::trigger("Could not fopen(filename: '{$this->path}', mode: '$fopen_mode').");
+            Warning::trigger("Could not fopen(filename: '{$this->path}', mode: '$fopen_mode').");
             $this->close_file();
         }
         if ($load_file) {
@@ -66,7 +70,7 @@ class FileHandle
         rewind($this->file_handle);
         if (!fwrite($this->file_handle, serialize($data))) {
             $type = get_resource_type($this->file_handle);
-            PHP_Library\Warning::trigger("Could not fwrite($type, \$data).");
+            Warning::trigger("Could not fwrite($type, \$data).");
         }
         $this->memory = $data;
         return $this;
