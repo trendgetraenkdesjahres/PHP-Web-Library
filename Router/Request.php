@@ -2,6 +2,12 @@
 
 namespace  PHP_Library\Router;
 
+use PHP_Library\Router\RequestTypes\CLIRequest;
+use PHP_Library\Router\RequestTypes\DataRequest;
+use PHP_Library\Router\RequestTypes\FormRequest;
+use PHP_Library\Router\RequestTypes\HTMLRequest;
+use PHP_Library\Router\RequestTypes\JSONRequest;
+
 /**
  * RequestInterface defines the methods that should be implemented by request classes.
  */
@@ -24,7 +30,7 @@ class Request
      *
      * @return Request The request object.
      */
-    public static function get(): Request
+    public static function get(): static
     {
         if (substr(php_sapi_name(), 0, 3) == 'cli') {
             return new CLIRequest();
@@ -168,8 +174,4 @@ class Request
     public function __construct(public ?string $method = null, public ?string $resource_path = null, public ?array $data = null)
     {
     }
-}
-// Include request type classes.
-foreach (glob(dirname(__FILE__) . "/RequestTypes/*Request.php") as $file) {
-    require_once $file;
 }

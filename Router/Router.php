@@ -2,52 +2,78 @@
 
 namespace  PHP_Library\Router;
 
-
 class Router
 {
 
-    public static array $post_endpoints = [];
+    public static array $endpoints = [];
 
     private static Request $request;
 
-    /* if not delcared otherwise by $response_type, reponse will be same type as request. (if possible) */
-    private static function get_response(Request $request, ?string $response_type = null): Response
+    private static self $instance;
+
+    public static function add_endpoint(Endpoint &$endpoint)
     {
-        $namespace_parts = explode('\\', get_class($request));
-        $request_type = array_pop($namespace_parts);
-        if (!$response_type) {
-            $response_type = str_replace(
-                search: 'Request',
-                replace: '',
-                subject: $request_type
+        self::init();
+        self::$endpoints[$endpoint->method][$endpoint->endpoint] = $endpoint;
+    }
+
+    public static function get_request(): Request
+    {
+        return self::$request;
+    }
+
+    /* if not delcared otherwise by $response_type, reponse will be same type as request. (if possible) */
+    private static function get_response(Request $request, string $response_class = 'HTMLResponse')
+    {
+        $response_full_class_name = __NAMESPACE__ . "\\ResponseTypes\\{$response_class}";
+        if ($endpoint = self::get_endpoint($request->resource_path, $request->method)) {
+            if ($response_class !== $endpoint->response_class) {
+                return new $response_full_class_name(
+                    content: "Endpoint expected '{$endpoint->response_class}', but '{$response_class}' was requested.",
+                    code: 400
+                );
+            }
+            $content = $endpoint->exec_callback();
+            if (!$content) {
+                $content = $endpoint->get_content();
+            }
+            return new $response_full_class_name(
+                content: $content,
+                code: 200
             );
-        }
-        $response_type_class = implode(
-            separator: '\\',
-            array: $namespace_parts
-        ) . "\\{$response_type}Response";
-        if (class_exists($response_type_class)) {
-            return new $response_type_class($request);
         } else {
-            throw new \InvalidArgumentException("Invalid request type: {$response_type_class}");
+            return new $response_full_class_name(
+                content: 'not found',
+                code: 404
+            );;
         }
     }
 
-    public function __construct()
+    private function __construct()
     {
         self::$request = Request::get();
         // auth middleware
     }
+
+    private static function init(): self
+    {
+        if (!isset(self::$instance)) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+
     public function __destruct()
     {
         // do-something middleware
         switch (self::$request->get_type()) {
             case 'Data':
-                $response = self::get_response(self::$request, 'JSON');
+            case 'JSON':
+                $response = self::get_response(self::$request, 'JSONResponse');
                 break;
 
             case 'Form':
-                $response = self::get_response(self::$request, 'HTML');
+                $response = self::get_response(self::$request, 'HTMLResponse');
                 break;
 
             default:
@@ -57,12 +83,11 @@ class Router
         echo $response;
     }
 
-    public static function add_endpoint(Endpoint $endpoint): void
+    public static function get_endpoint(string $resource_path, string $method): Endpoint|false
     {
-        try {
-            array_push(self::$post_endpoints, $endpoint);
-        } catch (\Throwable $e) {
-            throw new \Error($e->message);
+        if (isset(self::$endpoints[$method][$resource_path])) {
+            return self::$endpoints[$method][$resource_path];
         }
+        return false;
     }
 }

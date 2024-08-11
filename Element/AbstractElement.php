@@ -1,6 +1,6 @@
 <?php
 
-namespace Element;
+namespace PHP_Library\Element;
 
 
 /**
