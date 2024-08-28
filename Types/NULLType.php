@@ -17,6 +17,6 @@ class NULLType extends TypeWrap
     public function __toString(): string
     {
         // Create a StringType instance with "null" and apply ANSI italic formatting.
-        return (new StringType("null"))->ansi_format_italic()->__toString();
+        return (new Str("null"))->format_italic()->__toString();
     }
 }

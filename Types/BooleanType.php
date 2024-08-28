@@ -17,8 +17,8 @@ class BooleanType extends TypeWrap
     public function __toString(): string
     {
         // Create a StringType with "true" if the value is true, otherwise "false".
-        $string = new StringType($this->value ? "true" : "false");
+        $string = new Str($this->value ? "true" : "false");
         // Apply ANSI italic formatting and return the formatted string.
-        return (string) $string->ansi_format_italic();
+        return (string) $string->format_italic();
     }
 }

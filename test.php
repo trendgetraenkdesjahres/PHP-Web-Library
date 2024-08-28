@@ -1,20 +1,13 @@
 <?php
 
-include 'Autoload.php';
+include 'ClassAutoloader.php';
 
-use AjaxHandler\AjaxScript;
-use Element\Element;
 use PHP_Library\ClassAutoloader;
-use PHP_Library\SMTPClient\SMTP_Client;
+use PHP_Library\Element\Ajax\ElementInteraction;
+use PHP_Library\Element\Element;
+use PHP_Library\Types\Arr;
+use PHP_Library\Types\Str;
 
-$autoload = new ClassAutoloader();
-$autoload->init();
+ClassAutoloader::init('.', '.');
 
-$button = new Element('button', ['type' => 'submit', 'id' => '1234'], 'Submit');
-$test = new Element('form', ['id' => '123', 'method' => 'post', 'action' => ''], 'moin', $button);
-
-$script = new AjaxScript('123', 'submit');
-
-$script->add_interactive_element($button);
-
-echo $test . $script;
+$arr = new Arr('me', 45);
