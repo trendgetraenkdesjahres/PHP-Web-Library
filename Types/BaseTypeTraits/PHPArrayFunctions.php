@@ -866,25 +866,25 @@ trait PHPArrayFunctions
         return $this;
     }
 
-
-    /**
-     * Sorts the specified array in ascending order.
-     *
-     * Static alias of `sort` and `asort`.
-     *
-     * @param array $array The input array.
-     * @param bool $maintain_keys Whether to maintain keys. Defaults to `true`.
-     * @param int $flags Optional flags for sorting. Defaults to `SORT_REGULAR`.
-     * @return static Returns a new instance after sorting in ascending order.
-     */
-    final static public function sort(array $array, bool $maintain_keys = true, int $flags = SORT_REGULAR): static
+    final public function custom_value_sort(callable $compare_function, bool $maintain_keys = false): static
     {
         if ($maintain_keys) {
-            asort($array, $flags);
+            $this->value = usort($this->array, $compare_function);
         } else {
-            sort($array, $flags);
+            $this->value = uasort($this->array, $compare_function);
         }
-        return new self($array);
+        return $this;
+    }
+
+    final public static function usort(array &$array, callable $callback): static
+    {
+        return new self(usort($array, $callback));
+    }
+
+    final public function custom_key_sort(callable $compare_function): static
+    {
+        $this->value = usort($this->array, $compare_function);
+        return $this;
     }
 
     /**
@@ -906,6 +906,25 @@ trait PHPArrayFunctions
         return $this;
     }
 
+    /**
+     * Sorts the specified array in ascending order.
+     *
+     * Static alias of `sort` and `asort`.
+     *
+     * @param array $array The input array.
+     * @param bool $maintain_keys Whether to maintain keys. Defaults to `true`.
+     * @param int $flags Optional flags for sorting. Defaults to `SORT_REGULAR`.
+     * @return static Returns a new instance after sorting in ascending order.
+     */
+    final static public function sort(array $array, bool $maintain_keys = true, int $flags = SORT_REGULAR): static
+    {
+        if ($maintain_keys) {
+            asort($array, $flags);
+        } else {
+            sort($array, $flags);
+        }
+        return new self($array);
+    }
 
     /**
      * Sorts the specified array in descending order.
@@ -1062,5 +1081,38 @@ trait PHPArrayFunctions
     {
         shuffle($array);
         return new self($array);
+    }
+
+    final public static function explode(string $string, string $separator, int $limit = PHP_INT_MAX): static
+    {
+        return new self(explode($separator, $string, $limit));
+    }
+
+    final public function implode(string $separator = ""): string
+    {
+        return implode($separator, $this->value);
+    }
+
+    public function get_first_key(): int|string|null
+    {
+        return array_key_first($this->value);
+    }
+    public function get_first_element(): mixed
+    {
+        if ($key = $this->get_first_key()) {
+            return $this->value[$key];
+        }
+        throw new \ValueError('empty array.');
+    }
+    public function get_last_key(): int|string|null
+    {
+        return array_key_last($this->value);
+    }
+    public function get_last_element(): mixed
+    {
+        if ($key = $this->get_last_key()) {
+            return $this->value[$key];
+        }
+        throw new \ValueError('empty array.');
     }
 }

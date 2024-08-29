@@ -590,6 +590,10 @@ trait PHPStringFunctions
         return $this;
     }
 
+    final public static function implode(array $array, string $separator = ""): static
+    {
+        return new self(implode($separator, $array));
+    }
     // str_word_count() get_word_count
     // strtotime() get_timestamp
 }

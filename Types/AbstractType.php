@@ -2,7 +2,7 @@
 
 namespace  PHP_Library\Types;
 
-abstract class Type
+abstract class AbstractType
 {
 
     protected $value;
@@ -53,5 +53,10 @@ abstract class Type
     public function is_empty(): bool
     {
         return empty($this->value);
+    }
+
+    public function get_built_in_type(): mixed
+    {
+        return $this->value;
     }
 }

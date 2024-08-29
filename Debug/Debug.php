@@ -2,8 +2,8 @@
 
 namespace  PHP_Library\Debug;
 
-use  PHP_Library\Types\Str;
-use  PHP_Library\Types\Type;
+use  PHP_Library\Types\StringType;
+use  PHP_Library\Types\AbstractType;
 
 class Debug
 {
@@ -57,30 +57,30 @@ class Debug
 
     private function print_cli_var(): void
     {
-        $var_content = Type::construct($this->expression_value);
-        $title = new Str("$this->method($this->expression_type)");
+        $var_content = AbstractType::construct($this->expression_value);
+        $title = new StringType("$this->method($this->expression_type)");
         if ($this->expression_type == 'string') {
-            $expression = new Str((string)$var_content);
+            $expression = new StringType((string)$var_content);
             $string_length = $expression->get_length();
             $expression->replace(PHP_EOL, '¶' . PHP_EOL)->word_wrap(80)->surround('`')->append("($string_length)");
         } else {
-            $expression = new Str((string) $var_content);
+            $expression = new StringType((string) $var_content);
         }
         $title->format_bold();
-        $string = new Str("$title $this->location\n$expression");
+        $string = new StringType("$title $this->location\n$expression");
         print $string->box_around_string(2);
     }
 
     private function print_html_var(): void
     {
-        $var_content = Type::construct($this->expression_value);
-        $title = new Str("$this->method(<code>$this->expression_type</code>)");
+        $var_content = AbstractType::construct($this->expression_value);
+        $title = new StringType("$this->method(<code>$this->expression_type</code>)");
         if ($this->expression_type == 'string') {
-            $expression = new Str((string)$var_content);
+            $expression = new StringType((string)$var_content);
             $string_length = $expression->get_length();
             $expression->replace(PHP_EOL, '¶' . PHP_EOL)->word_wrap(80)->surround('`')->append("($string_length)");
         } else {
-            $expression = new Str((string) $var_content);
+            $expression = new StringType((string) $var_content);
         }
         $css_style = "
         details {

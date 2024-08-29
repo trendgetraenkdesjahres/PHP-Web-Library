@@ -50,11 +50,11 @@ class ObjectType extends TypeWrap implements \IteratorAggregate
     /**
      * Get the class name of the wrapped object.
      *
-     * @return Str The class name as a StringType.
+     * @return StringType The class name as a StringType.
      */
-    public function get_class_name(): Str
+    public function get_class_name(): StringType
     {
-        return new Str(get_class($this->value));
+        return new StringType(get_class($this->value));
     }
 
     /**
@@ -82,14 +82,14 @@ class ObjectType extends TypeWrap implements \IteratorAggregate
         $class_name = $this->get_class_name();
         $show_scope = true;
 
-        $string = new Str();
+        $string = new StringType();
         $properties = get_mangled_object_vars($this->value);
         if (empty($properties)) {
-            $empty = new Str('empty');
+            $empty = new StringType('empty');
             return $empty->format_italic();
         }
         foreach ($properties as $property => $value) {
-            $property_name = new Str($property);
+            $property_name = new StringType($property);
             $property_name->remove_null_characters();
             if ($property_name->is_starting_with($class_name)) {
                 $scope = 'private';
@@ -108,16 +108,16 @@ class ObjectType extends TypeWrap implements \IteratorAggregate
         /* append line of second column to each line */
         $longest_line_length = $string->get_longest_line()->get_length();
         $indexed_properties = array_keys($properties);
-        $output = new Str();
+        $output = new StringType();
         foreach ($string->get_lines() as $i => $line) {
             $property = $indexed_properties[$i];
-            $value = Type::construct($properties[$property]);
+            $value = AbstractType::construct($properties[$property]);
             if (is_string($value->value)) {
-                $value = new Str((string)$value);
+                $value = new StringType((string)$value);
                 $string_length = $value->get_length();
                 $value->replace(PHP_EOL, '¶' . PHP_EOL)->word_wrap(80)->surround('`')->append("($string_length)");
             } else {
-                $value = new Str((string) $value);
+                $value = new StringType((string) $value);
             }
 
 

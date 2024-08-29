@@ -4,7 +4,7 @@ namespace  PHP_Library\Types;
 
 use PHP_Library\Types\BaseTypeTraits\PHPStringFunctions;
 
-class Str extends Type
+class StringType extends AbstractType implements \Stringable
 {
     use PHPStringFunctions;
 
@@ -83,7 +83,7 @@ class Str extends Type
     {
         if ($this->has_beginning($substring)) {
             $this->get_substring(
-                offset: Str::len($substring)
+                offset: StringType::len($substring)
             );
         }
         return $this;
@@ -95,5 +95,18 @@ class Str extends Type
             $string = new self($string);
         }
         return $string;
+    }
+
+    /**
+     * Surround the current string with another string.
+     *
+     * @param string|StringType $string The string to surround the current string with.
+     *
+     * @return static
+     */
+    public function surround(string|StringType $string): static
+    {
+        $this->value = $string . $this->value . StringType::rev($string);
+        return $this;
     }
 }
