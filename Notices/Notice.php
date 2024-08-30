@@ -17,12 +17,11 @@ class Notice extends \Exception
      */
     public function __construct(string $message)
     {
-        parent::__construct($message);
-
         if (!self::$initialized) {
             $this::initialize();
             self::$initialized = true;
         }
+        parent::__construct($message);
     }
 
     /**

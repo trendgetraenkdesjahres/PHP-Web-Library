@@ -3,6 +3,7 @@
 namespace PHP_Library\APIClients;
 
 use \CurlHandle;
+use Error;
 use PHP_Library\Notices\Notice;
 use PHP_Library\Notices\Warning;
 
@@ -336,13 +337,10 @@ class APIClient
     public function get_response_body(string $http_method = 'get'): array|string|false
     {
         if (!$this->curl_response_body) {
-            if ($http_method === 'get') {
-                $this->http_get();
-            }
-            if ($http_method === 'post') {
-                $this->http_post();
+            if (method_exists($this, "http_{$http_method}")) {
+                call_user_func([$this, "http_{$http_method}"]);
             } else {
-                throw new \Error("'{$http_method}' is not a http method.");
+                throw new Error("http_'{$http_method}'-method is not implemented.");
             }
         }
         if ($this->curl_response_body) {

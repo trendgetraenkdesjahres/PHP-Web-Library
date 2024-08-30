@@ -140,4 +140,15 @@ class Directory implements \Iterator
         }
         return Directory::open($path);
     }
+
+    public function delete_content(): static
+    {
+        foreach ($this->files as $file) {
+            unlink($file);
+        }
+        foreach ($this->folders as $folder) {
+            unlink($folder);
+        }
+        return $this;
+    }
 }
