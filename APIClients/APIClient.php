@@ -337,6 +337,7 @@ class APIClient
     public function get_response_body(string $http_method = 'get'): array|string|false
     {
         if (!$this->curl_response_body) {
+<<<<<<< HEAD
             switch ($http_method) {
                 case 'get':
                     $this->http_get();
@@ -347,6 +348,12 @@ class APIClient
                 default:
                     throw new \Error("'{$http_method}' is not a http method.");
                     break;
+=======
+            if (method_exists($this, "http_{$http_method}")) {
+                call_user_func([$this, "http_{$http_method}"]);
+            } else {
+                throw new Error("http_'{$http_method}'-method is not implemented.");
+>>>>>>> 47ea1a2f053287ccc0522bd6c920e27f837fd8ac
             }
         }
         if ($this->curl_response_body) {

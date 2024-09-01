@@ -2,51 +2,34 @@
 
 namespace  PHP_Library\Router;
 
-use \Throwable;
 
-/**
- * ResponseInterface defines the methods that should be implemented by response classes.
- */
-interface ResponseInterface
+abstract class Response
 {
-    public function __construct(Request $request);
-    public function __toString(): string;
-    public function set_code(): Response;
-    public function set_body(): Response;
-}
+    abstract public function set_body(mixed $content): static;
 
-
-class Response
-{
     public ?string $resource = null;
     public ?int $code = null;
-    public ?array $header = null;
+    public array $header;
     public ?string $body = null;
     public ?array $local_documents = null;
+
+    public function add_header(string ...$header): static
+    {
+        foreach ($header as $header_line) {
+            array_push($this->header, $header_line);
+        }
+        return $this;
+    }
 
     /**
      * Constructor to initialize a response based on the request.
      *
      * @param Request $request The request for which the response is generated.
      */
-    public function __construct(Request $request)
+    public function __construct(mixed $content, int $code)
     {
-        $this->resource = $request->get_resource_path();
-
-        if (get_class($request) != 'Route\CLIRequest') {
-            call_user_func([$this, 'set_code']);
-            call_user_func([$this, 'set_header']);
-        }
-        if ($request->get_resource_path()) {
-            try {
-                call_user_func([$this, 'set_body_source']);
-            } catch (Throwable $e) {
-                throw new \Error(
-                    get_class($this) . "->set_body_source() must be declared to handle a '" . get_class($request) . "'."
-                );
-            }
-        }
-        call_user_func([$this, 'set_body']);
+        $this->set_body($content);
+        $this->code = $code;
     }
 
     /**
@@ -66,9 +49,4 @@ class Response
         }
         return $this->body;
     }
-}
-
-// Include response type classes.
-foreach (glob(dirname(__FILE__) . "/ResponseTypes/*Response.php") as $file) {
-    require_once $file;
 }

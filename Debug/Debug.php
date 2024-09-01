@@ -3,7 +3,7 @@
 namespace  PHP_Library\Debug;
 
 use  PHP_Library\Types\StringType;
-use  PHP_Library\Types\Type;
+use  PHP_Library\Types\AbstractType;
 
 class Debug
 {
@@ -57,7 +57,7 @@ class Debug
 
     private function print_cli_var(): void
     {
-        $var_content = Type::construct($this->expression_value);
+        $var_content = AbstractType::construct($this->expression_value);
         $title = new StringType("$this->method($this->expression_type)");
         if ($this->expression_type == 'string') {
             $expression = new StringType((string)$var_content);
@@ -66,14 +66,14 @@ class Debug
         } else {
             $expression = new StringType((string) $var_content);
         }
-        $title->ansi_format_bold();
+        $title->format_bold();
         $string = new StringType("$title $this->location\n$expression");
         print $string->box_around_string(2);
     }
 
     private function print_html_var(): void
     {
-        $var_content = Type::construct($this->expression_value);
+        $var_content = AbstractType::construct($this->expression_value);
         $title = new StringType("$this->method(<code>$this->expression_type</code>)");
         if ($this->expression_type == 'string') {
             $expression = new StringType((string)$var_content);

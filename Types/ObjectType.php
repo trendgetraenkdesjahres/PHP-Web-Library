@@ -86,11 +86,11 @@ class ObjectType extends TypeWrap implements \IteratorAggregate
         $properties = get_mangled_object_vars($this->value);
         if (empty($properties)) {
             $empty = new StringType('empty');
-            return $empty->ansi_format_italic();
+            return $empty->format_italic();
         }
         foreach ($properties as $property => $value) {
             $property_name = new StringType($property);
-            $property_name->sanitize();
+            $property_name->remove_null_characters();
             if ($property_name->is_starting_with($class_name)) {
                 $scope = 'private';
                 $property_name->remove_string_at_start($class_name);
@@ -111,7 +111,7 @@ class ObjectType extends TypeWrap implements \IteratorAggregate
         $output = new StringType();
         foreach ($string->get_lines() as $i => $line) {
             $property = $indexed_properties[$i];
-            $value = Type::construct($properties[$property]);
+            $value = AbstractType::construct($properties[$property]);
             if (is_string($value->value)) {
                 $value = new StringType((string)$value);
                 $string_length = $value->get_length();

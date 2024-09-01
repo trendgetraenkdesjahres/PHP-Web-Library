@@ -1,6 +1,6 @@
 <?php
 
-include 'Autoload.php';
+include 'ClassAutoloader.php';
 
 use AjaxHandler\AjaxScript;
 use Element\Element;

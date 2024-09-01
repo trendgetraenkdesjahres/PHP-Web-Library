@@ -1,9 +1,8 @@
 <?php
 
-namespace Element;
+namespace PHP_Library\Element;
 
 use DOMDocument;
-use Throwable;
 
 /**
  * Class Element

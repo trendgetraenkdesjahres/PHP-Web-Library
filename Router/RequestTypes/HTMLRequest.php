@@ -2,6 +2,11 @@
 
 namespace  PHP_Library\Router\RequestTypes;
 
+use PHP_Library\Router\Request;
+use PHP_Library\Router\RequestInterface;
+use PHP_Library\Router\Response;
+use PHP_Library\Router\ResponseTypes\HTMLResponse;
+
 /**
  * HTMLRequest is a specialized class for handling HTTP requests that expect HTML responses.
  */

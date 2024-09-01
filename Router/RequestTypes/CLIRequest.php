@@ -2,6 +2,11 @@
 
 namespace  PHP_Library\Router\RequestTypes;
 
+use PHP_Library\Router\Request;
+use PHP_Library\Router\RequestInterface;
+use PHP_Library\Router\Response;
+use PHP_Library\Router\ResponseTypes\CLIResponse;
+
 /**
  * CLIRequest is a specialized class for handling command-line interface (CLI) requests.
  */

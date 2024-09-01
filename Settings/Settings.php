@@ -2,6 +2,7 @@
 
 namespace  PHP_Library\Settings;
 
+
 /**
  * Settings
  *
@@ -12,6 +13,7 @@ class Settings
     public static array $settings = [];
     private static bool $initialized = false;
     protected static $file_name = 'settings.ini';
+    protected static string $main_section = 'settings';
     protected static array $template = [
         'settings' => [],
     ];
@@ -38,25 +40,18 @@ class Settings
      * @param string $key key can be 'key' to access values of the section [settings] or 'section/key' to access values of other sections.
      * @param bool $strict if true, the method throws an error when the 'section/key' is not found.
      *
-     * @return string
+     * @return mixed
      */
-    public static function get(string $key, $strict = false): ?string
+    public static function get(string $key, ?string $type_or_class = null, $strict = false): mixed
     {
-        if (!self::$initialized) self::initialize();
-        try {
-            $section_and_key =  self::get_section_key_array($key);
-        } catch (\Throwable $e) {
-            throw new \Error($e->getMessage());
+        self::initialize();
+        $section = self::$main_section;
+        $key = self::get_section_key($key, $section);
+        $setting_value = self::get_settings_value($section, $key, $strict);
+        if ($type_or_class) {
+            return self::cast_value($type_or_class, $setting_value);
         }
-        if (!isset(self::$settings[$section_and_key['section']])) {
-            if ($strict) throw new \Error("Setting section [{$section_and_key['section']}] was not found.");
-            return null;
-        }
-        if (!isset(self::$settings[$section_and_key['section']][$section_and_key['key']])) {
-            if ($strict) throw new \Error("Setting {$section_and_key['key']} in [{$section_and_key['section']}] was not found.");
-            return null;
-        }
-        return self::$settings[$section_and_key['section']][$section_and_key['key']];
+        return $setting_value;
     }
 
     /**
@@ -69,8 +64,7 @@ class Settings
      */
     public static function register(string $key, null|bool|float|int|string $default = ''): bool
     {
-        // TODO DAS MUSS IWIE ABAER NICHT SO
-        if (!self::$initialized) self::initialize();
+        self::initialize();
 
         if (strpbrk($key, '{}|&~![()^"')) {
             throw new \Error("'$key' must not contain any of this characters: {}|&~![()\"");
@@ -80,14 +74,15 @@ class Settings
             $default = self::escape_characters($default);
         }
 
-        $section_and_key = self::get_section_key_array($key);
+        $section = self::$main_section;
+        $key = self::get_section_key($key, $section);
 
-        if (!isset(self::$settings[$section_and_key['section']])) {
-            self::$settings[$section_and_key['section']] = [];
+        if (!isset(self::$settings[$section])) {
+            self::$settings[$section] = [];
         }
 
-        if (!isset(self::$settings[$section_and_key['section']][$section_and_key['key']])) {
-            self::$settings[$section_and_key['section']][$section_and_key['key']] = $default;
+        if (!isset(self::$settings[$section][$key])) {
+            self::$settings[$section][$key] = $default;
             self::write_current_settings_to_ini();
             return true;
         }
@@ -101,6 +96,9 @@ class Settings
      */
     private static function initialize(): void
     {
+        if (self::$initialized) {
+            return;
+        }
         if (!file_exists(filename: self::$file_name,)) {
             self::touch_ini();
         }
@@ -221,30 +219,47 @@ class Settings
     }
 
     /**
-     * Converts string to access Settings to array of ['section' => 'section_name', 'key' => 'key_name']
      *
-     * @param string $key [explicite description]
+     * @param string $key access subsections with 'section/key' or 'key' to acces main-section
      *
-     * @return array
+     * @return string
      */
-    private static function get_section_key_array(string $key): array
+    private static function get_section_key(string $key, &$section): string
     {
-        $section_and_key = explode('/', $key);
+        $section_and_key = explode('/', $key, 2);
         switch (count($section_and_key)) {
             case 1:
-                return [
-                    'section' => 'settings',
-                    'key' => $section_and_key[0]
-                ];
-
+                return $section_and_key[0];
             case 2:
-                return [
-                    'section' => $section_and_key[0],
-                    'key' => $section_and_key[1]
-                ];
-
+                $section = $section_and_key[0];
+                return $section_and_key[1];
             default:
                 throw new \Error("'$key' is an invalid key.");
         }
+    }
+
+    private static function get_settings_value(string $section, string $key, bool $strict): mixed
+    {
+        if (!isset(self::$settings[$section])) {
+            if ($strict) throw new \Error("Setting section [{$section}] was not found.");
+            return null;
+        }
+        if (!isset(self::$settings[$section][$key])) {
+            if ($strict) throw new \Error("Setting {$key} in [{$section}] was not found.");
+            return null;
+        }
+
+        return self::$settings[$section][$key];
+    }
+
+    private static function cast_value(string $type_or_class, mixed $value): mixed
+    {
+        if (class_exists($type_or_class)) {
+            return new $type_or_class($value);
+        } elseif (settype($value, $type_or_class)) {
+        } else {
+            throw new \Error("'{$type_or_class}' is not a type or class.");
+        }
+        return $value;
     }
 }
