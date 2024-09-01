@@ -4,10 +4,10 @@ include 'Autoload.php';
 
 use AjaxHandler\AjaxScript;
 use Element\Element;
-use PHP_Library\ClassAutoloader;
+use PHP_Library\Autoloader;
 use PHP_Library\SMTPClient\SMTP_Client;
 
-$autoload = new ClassAutoloader();
+$autoload = new Autoloader();
 $autoload->init();
 
 $button = new Element('button', ['type' => 'submit', 'id' => '1234'], 'Submit');

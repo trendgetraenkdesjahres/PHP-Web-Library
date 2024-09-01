@@ -3,8 +3,9 @@
 namespace PHP_Library\APIClients;
 
 use \CurlHandle;
-use PHP_Library\Notices\Notice;
-use PHP_Library\Notices\Warning;
+use PHP_Library\Error\Error;
+use PHP_Library\Error\Warning;
+use PHP_Library\Error\Notice;
 
 class APIClient
 {
@@ -306,7 +307,7 @@ class APIClient
         if (is_callable($callable_filter)) {
             array_push($this->result_body_filters, $callable_filter);
         } else {
-            throw new \Error("$callable_filter is not callable.");
+            throw new Error("$callable_filter is not callable.");
         }
         return $this;
     }
@@ -336,13 +337,16 @@ class APIClient
     public function get_response_body(string $http_method = 'get'): array|string|false
     {
         if (!$this->curl_response_body) {
-            if ($http_method === 'get') {
-                $this->http_get();
-            }
-            if ($http_method === 'post') {
-                $this->http_post();
-            } else {
-                throw new \Error("'{$http_method}' is not a http method.");
+            switch ($http_method) {
+                case 'get':
+                    $this->http_get();
+                    break;
+                case 'post':
+                    $this->http_post();
+                    break;
+                default:
+                    throw new \Error("'{$http_method}' is not a http method.");
+                    break;
             }
         }
         if ($this->curl_response_body) {

@@ -3,6 +3,7 @@
 namespace  PHP_Library\DataStorage;
 
 use  PHP_Library\Debug\Debug;
+use PHP_Library\Error\Error;
 use  PHP_Library\Notices\Warning;
 use  PHP_Library\Settings\Settings;
 use  PHP_Library\System\FileHandle;
@@ -210,9 +211,10 @@ class FileStorage implements DataStorageInterface
             $cells_that_need_to_be_written--;
             array_push(self::$data[$table][$column_name], $key_value_pairs[$column_name]);
         }
-        if ($cells_that_need_to_be_written !== 0) {
-            throw new \Error("Missing fields for '$table'");
-        }
+        Error::throw_if(
+            $cells_that_need_to_be_written !== 0,
+            "Missing fields for '$table'"
+        );
         self::$file
             ->open_file('r+', false)
             ->write_file(self::$data)

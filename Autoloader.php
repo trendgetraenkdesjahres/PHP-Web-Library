@@ -2,7 +2,9 @@
 
 namespace PHP_Library;
 
-class ClassAutoloader
+use PHP_Library\Error\Error;
+
+class Autoloader
 {
     /**
      * @var string $includes_dir The directory path where non-`PHP_Library` classes are located.
@@ -127,7 +129,7 @@ class ClassAutoloader
     {
         if (! file_exists($class_file)) {
             if ($throw_error) {
-                throw new \Error("Class '{$full_class_name}'-File '{$class_file}' not found.");
+                throw new Error("Class '{$full_class_name}'-File '{$class_file}' not found.");
             }
             return false;
         }
@@ -147,13 +149,10 @@ class ClassAutoloader
     }
 
     /**
-     * Replaces the namespace separators with directory separators in a class name.
+     * Replaces the namespace separators with directory separators.
      *
-     * This method converts the namespace separators (`\`) in a fully-qualified class name to
-     * directory separators (`/` or `\` depending on the system).
-     *
-     * @param string $class_name The class name with namespace separators.
-     * @return string The class name with directory separators.
+     * @param string $class_name The class name with namespace
+     * @return string The class name with directory separators
      */
     private static function replace_class_seperator(string $class_name): string
     {

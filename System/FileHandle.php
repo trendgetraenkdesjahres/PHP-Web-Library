@@ -15,7 +15,7 @@ class FileHandle
 
     public function __construct(string $path, bool $lock_file = true)
     {
-        $path = realpath($path);
+        $this->path = realpath($path);
         $this->name = pathinfo($path, PATHINFO_BASENAME);
         $this->lock_file = $lock_file;
     }
