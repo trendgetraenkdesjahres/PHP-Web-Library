@@ -1,15 +1,17 @@
 <?php
 
-namespace  PHP_Library\DataStorage\Tables;
+namespace  PHP_Library\DataStorage\Table;
 
-use Debug\Debug;
 use PHP_Library\DataStorage\FileStorage;
+use PHP_Library\DataStorage\Table\AbstractTable;
 
 /**
  * FileTable is a concrete implementation of DataStorageTable for file-based tables.
  */
-class FileTable extends DataStorageTable implements DataStorageTableInterface
+class FileTable extends AbstractTable
 {
+    public function __construct(public string $name) {}
+
     public function get_name(): string
     {
         return $this->name;
@@ -49,7 +51,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return FileStorage::get_queried_data();
     }
 
-    public function add_row(array $key_value_pairs): DataStorageTableInterface
+    public function add_row(array $key_value_pairs): static
     {
         FileStorage::create_table_row(
             table: $this->name,
@@ -58,7 +60,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return $this;
     }
 
-    public function set_cell(int $id, string $column, mixed $value): DataStorageTableInterface
+    public function set_cell(int $id, string $column, mixed $value): static
     {
         FileStorage::query(
             table: $this->name,
@@ -70,7 +72,7 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return $this;
     }
 
-    public function set_cell_where(string $column, mixed $value, $where_condition): DataStorageTableInterface
+    public function set_cell_where(string $column, mixed $value, $where_condition): static
     {
         FileStorage::query(
             table: $this->name,
@@ -82,27 +84,25 @@ class FileTable extends DataStorageTable implements DataStorageTableInterface
         return $this;
     }
 
-    public function delete_row(int $id): DataStorageTableInterface
+    public function delete_row(int $id): static
     {
         return $this;
     }
 
     public function get_related_cell(
         int $id,
-        DataStorageTable $related_table,
+        AbstractTable $related_table,
         string $related_return_column,
-    ): mixed {
-    }
+    ): mixed {}
 
-    public function delete_row_where($where_condition): DataStorageTableInterface
+    public function delete_row_where($where_condition): static
     {
         return $this;
     }
 
     public function get_related_cell_where(
-        DataStorageTable $related_table,
+        AbstractTable $related_table,
         string $related_return_column,
         string ...$where_condition,
-    ): mixed {
-    }
+    ): mixed {}
 }

@@ -1,9 +1,9 @@
 <?php
 
-namespace  PHP_Library\Router;
+namespace  PHP_Library\Router\Response;
 
 
-abstract class Response
+abstract class AbstractResponse
 {
     abstract public function set_body(mixed $content): static;
 
@@ -49,4 +49,5 @@ abstract class Response
         }
         return $this->body;
     }
+    abstract public function articulate(): void;
 }

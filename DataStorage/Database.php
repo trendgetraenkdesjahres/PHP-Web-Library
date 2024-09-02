@@ -2,15 +2,16 @@
 
 namespace  PHP_Library\DataStorage;
 
-use  PHP_Library\Notices\Warning;
 use  PHP_Library\Settings\Settings;
 use PDO;
 use PDOStatement;
+use PHP_Library\DataStorage\Table\Column;
+use PHP_Library\Error\Warning;
 
 /**
  * DatabaseStorage is a class that handles database storage using PDO.
  */
-class DatabaseStorage implements DataStorageInterface
+class DatabaseStorage extends DataStorage
 {
     private static $pdo;
     private static PDOStatement $result;
@@ -83,7 +84,7 @@ class DatabaseStorage implements DataStorageInterface
      * @param string $table The name of the table.
      * @param TableColumn ...$columns The columns to create.
      */
-    public static function create_table(string $table, TableColumn ...$columns): bool
+    public static function create_table(string $table, Column ...$columns): bool
     {
         $sql_query = "CREATE TABLE $table (";
         foreach ($columns as $column) {
@@ -142,7 +143,7 @@ class DatabaseStorage implements DataStorageInterface
         try {
             self::$result = self::$pdo->query($sql_query);
         } catch (\Throwable $e) {
-            PHP_Library\Warning::trigger($e->getMessage());
+            Warning::trigger($e->getMessage());
         }
     }
 
@@ -152,7 +153,7 @@ class DatabaseStorage implements DataStorageInterface
      * @param string $table_name The name of the table.
      * @return DatabaseTable The table instance.
      */
-    public static function get_table(string $table_name): DataStorageTableInterface
+    public static function get_table(string $table_name): DatabaseTable
     {
         return new DatabaseTable($table_name);
     }

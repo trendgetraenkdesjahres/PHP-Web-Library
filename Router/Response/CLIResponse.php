@@ -1,19 +1,19 @@
 <?php
 
-namespace  PHP_Library\Router\ResponseTypes;
+namespace  PHP_Library\Router\Response;
 
-use PHP_Library\Router\Response;
-use PHP_Library\Router\ResponseInterface;
+use PHP_Library\Router\Response\Traits\CLIText;
 
 /**
  * CLIResponse is a specialized class for handling responses in the command-line interface (CLI).
  */
-class CLIResponse extends Response implements ResponseInterface
+class CLIResponse extends AbstractResponse
 {
+    use CLIText;
     /**
      * Set the HTTP response code based on local documents.
      *
-     * @return Response The response object.
+     * @return AbstractResponse The response object.
      */
     public function set_code(): static
     {

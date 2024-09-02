@@ -59,4 +59,9 @@ abstract class AbstractType
     {
         return $this->value;
     }
+
+    public static function convert(mixed &$mixed): static
+    {
+        return $mixed = new static($mixed);
+    }
 }

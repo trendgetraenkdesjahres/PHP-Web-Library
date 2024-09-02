@@ -2,9 +2,10 @@
 
 namespace  PHP_Library\DataStorage;
 
-use  PHP_Library\Debug\Debug;
+use PHP_Library\DataStorage\Table\Column;
+use PHP_Library\DataStorage\Table\FileTable;
 use PHP_Library\Error\Error;
-use  PHP_Library\Notices\Warning;
+use PHP_Library\Error\Warning;
 use  PHP_Library\Settings\Settings;
 use  PHP_Library\System\FileHandle;
 
@@ -12,9 +13,9 @@ use  PHP_Library\System\FileHandle;
 /**
  * FileStorage is a class that handles data storage using files.
  */
-class FileStorage implements DataStorageInterface
+class FileStorage extends DataStorage
 {
-    protected static mixed $data;
+    protected static mixed $data = null;
     private static FileHandle $file;
     public static mixed $query_result = [];
 
@@ -31,6 +32,7 @@ class FileStorage implements DataStorageInterface
             $path = getcwd() . '/' . $path;
         }
 
+
         self::$file = new FileHandle($path);
         try {
             self::$file
@@ -40,7 +42,7 @@ class FileStorage implements DataStorageInterface
             self::$data = self::$file->get_memory();
             return true;
         } catch (\Throwable $e) {
-            PHP_Library\Warning::trigger($e->getMessage());
+            Warning::trigger($e->getMessage());
             return false;
         }
     }
@@ -52,7 +54,7 @@ class FileStorage implements DataStorageInterface
      */
     public static function get_tables(): array
     {
-        self::$file
+        self::get_file()
             ->open_file()
             ->close_file();
         self::$data = self::$file->get_memory();
@@ -146,11 +148,11 @@ class FileStorage implements DataStorageInterface
      * @param TableColumn ...$columns The columns to create.
      * @return bool Returns true if the table is created, false if it already exists.
      */
-    public static function create_table(string $table, TableColumn ...$columns): bool
+    public static function create_table(string $table, Column ...$columns): bool
     {
         if (self::$data) {
             if (key_exists($table, self::$data)) {
-                PHP_Library\Warning::trigger("'$table' already exists. Not created.");
+                Warning::trigger("'$table' already exists. Not created.");
                 return false;
             }
 
@@ -172,7 +174,7 @@ class FileStorage implements DataStorageInterface
                     'timestamp' => $column->timestamp,
                 ];
         }
-        self::$file
+        self::get_file()
             ->open_file('r+', false)
             ->write_file(self::$data)
             ->close_file();
@@ -211,11 +213,11 @@ class FileStorage implements DataStorageInterface
             $cells_that_need_to_be_written--;
             array_push(self::$data[$table][$column_name], $key_value_pairs[$column_name]);
         }
-        Error::throw_if(
+        Error::if(
             $cells_that_need_to_be_written !== 0,
             "Missing fields for '$table'"
         );
-        self::$file
+        self::get_file()
             ->open_file('r+', false)
             ->write_file(self::$data)
             ->close_file();
@@ -390,8 +392,16 @@ class FileStorage implements DataStorageInterface
      * @param string $table_name The name of the table.
      * @return FileTable The table instance.
      */
-    public static function get_table(string $table_name): DataStorageTableInterface
+    public static function get_table(string $table_name): FileTable
     {
         return new FileTable($table_name, false);
+    }
+
+    private static function get_file(): FileHandle
+    {
+        if (!isset(self::$file)) {
+            self::initalize();
+        }
+        return self::$file;
     }
 }

@@ -4,7 +4,7 @@ namespace  PHP_Library\Router\RequestTypes;
 
 use PHP_Library\Router\Request;
 use PHP_Library\Router\RequestInterface;
-use PHP_Library\Router\Response;
+use PHP_Library\Router\Response\AbstractResponse;
 use PHP_Library\Router\ResponseTypes\HTMLResponse;
 
 /**
@@ -17,9 +17,9 @@ class HTMLRequest extends Request implements RequestInterface
     /**
      * Get a response object for HTML requests.
      *
-     * @return Response The HTML response object.
+     * @return AbstractResponse The HTML response object.
      */
-    public function get_response(): Response
+    public function get_response(): AbstractResponse
     {
         $response = new HTMLResponse($this);
         return $response;

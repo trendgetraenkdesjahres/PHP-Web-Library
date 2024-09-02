@@ -9,7 +9,7 @@ use PHP_Library\Types\BaseTypeTraits\PHPArrayFunctions;
  *
  * @package TypeWrap
  */
-class ArrayType extends AbstractType implements \Iterator, \ArrayAccess, \Serializable, \Countable
+class ArrayType extends AbstractType implements \Iterator, \ArrayAccess, \Countable
 {
     use PHPArrayFunctions;
     /**

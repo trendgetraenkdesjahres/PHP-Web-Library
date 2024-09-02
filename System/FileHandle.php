@@ -66,7 +66,6 @@ class FileHandle
 
     public function write_file(mixed $data): FileHandle
     {
-        var_dump($data);
         rewind($this->file_handle);
         if (!fwrite($this->file_handle, serialize($data))) {
             $type = get_resource_type($this->file_handle);
@@ -92,5 +91,20 @@ class FileHandle
     public function get_memory()
     {
         return $this->memory;
+    }
+
+    public function get_change_time(): int
+    {
+        return filectime($this);
+    }
+
+    public function get_last_access_time(): int
+    {
+        return fileatime($this);
+    }
+
+    public function get_modification_time(): int
+    {
+        return filemtime($this);
     }
 }

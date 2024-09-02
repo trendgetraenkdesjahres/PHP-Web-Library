@@ -7,13 +7,14 @@ use PHP_Library\Router\RequestTypes\DataRequest;
 use PHP_Library\Router\RequestTypes\FormRequest;
 use PHP_Library\Router\RequestTypes\HTMLRequest;
 use PHP_Library\Router\RequestTypes\JSONRequest;
+use PHP_Library\Router\Response\AbstractResponse;
 
 /**
  * RequestInterface defines the methods that should be implemented by request classes.
  */
 interface RequestInterface
 {
-    public function get_response(): Response;
+    public function get_response(): AbstractResponse;
     public function get_method(): string|null;
     public function get_data(): array|null;
     public function get_resource_path(): string|null;
@@ -171,7 +172,5 @@ class Request
      * @param string|null $resource_path The resource path.
      * @param array|null  $data          The request data.
      */
-    public function __construct(public ?string $method = null, public ?string $resource_path = null, public ?array $data = null)
-    {
-    }
+    public function __construct(public ?string $method = null, public ?string $resource_path = null, public ?array $data = null) {}
 }

@@ -33,6 +33,9 @@ class Element extends AbstractElement
 
         # set attributes
         foreach ($this->attributes as $attribute => $value) {
+            if (is_int($attribute)) {
+                $attribute = $value;
+            }
             if (isset($value)) $this->node->setAttribute($attribute, $value);
         }
 

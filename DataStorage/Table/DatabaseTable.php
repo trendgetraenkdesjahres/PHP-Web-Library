@@ -1,11 +1,13 @@
 <?php
 
-namespace  PHP_Library\DataStorage\Tables;
+namespace  PHP_Library\DataStorage\Table;
 
 use PDO;
+use PHP_Library\DataStorage\DatabaseStorage;
 
-class DatabaseTable extends DataStorageTable implements DataStorageTableInterface
+class DatabaseTable extends AbstractTable
 {
+    public function __construct(public string $name) {}
     public function get_name(): string
     {
         return $this->name;
@@ -33,7 +35,7 @@ class DatabaseTable extends DataStorageTable implements DataStorageTableInterfac
 
     public function get_related_cell(
         int $id,
-        DataStorageTable $related_table,
+        AbstractTable $related_table,
         string $related_return_column,
     ): mixed {
         DatabaseStorage::query("SELECT $related_return_column FROM {$related_table->name} WHERE id = $id;");
@@ -41,7 +43,7 @@ class DatabaseTable extends DataStorageTable implements DataStorageTableInterfac
     }
 
     public function get_related_cell_where(
-        DataStorageTable $related_table,
+        AbstractTable $related_table,
         string $related_return_column,
         string ...$where_condition,
     ): mixed {
@@ -50,7 +52,7 @@ class DatabaseTable extends DataStorageTable implements DataStorageTableInterfac
         return DatabaseStorage::get_queried_data();
     }
 
-    public function add_row(array $key_value_pairs): DataStorageTableInterface
+    public function add_row(array $key_value_pairs): static
     {
         $keys = implode(", ", array_keys($key_value_pairs));
         $values = "'" . implode("', '", array_values($key_value_pairs)) . "'";
@@ -58,25 +60,25 @@ class DatabaseTable extends DataStorageTable implements DataStorageTableInterfac
         return $this;
     }
 
-    public function set_cell(int $id, string $column, mixed $value): DataStorageTableInterface
+    public function set_cell(int $id, string $column, mixed $value): static
     {
         DatabaseStorage::query("UPDATE {$this->name} SET $column = '$value' WHERE id = $id;");
         return $this;
     }
 
-    public function set_cell_where(string $column, mixed $value, $where_condition): DataStorageTableInterface
+    public function set_cell_where(string $column, mixed $value, $where_condition): static
     {
         DatabaseStorage::query("UPDATE {$this->name} SET $column = '$value' WHERE $where_condition;");
         return $this;
     }
 
-    public function delete_row(int $id): DataStorageTableInterface
+    public function delete_row(int $id): static
     {
         DatabaseStorage::query("DELETE FROM {$this->name} WHERE id = $id;");
         return $this;
     }
 
-    public function delete_row_where($where_condition): DataStorageTableInterface
+    public function delete_row_where($where_condition): static
     {
         DatabaseStorage::query("DELETE FROM {$this->name} WHERE $where_condition;");
         return $this;

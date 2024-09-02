@@ -1,14 +1,15 @@
 <?php
 
-namespace  PHP_Library\Router\ResponseTypes;
+namespace  PHP_Library\Router\Response;
 
-use PHP_Library\Router\Response;
+use PHP_Library\Router\Response\Traits\HTTPText;
 
 /**
  * HTMLResponse is a specialized class for handling HTML responses.
  */
-class HTMLResponse extends Response
+class HTMLResponse extends AbstractResponse
 {
+    use HTTPText;
     public array $header =  ['Content-Type: text/html'];
     public string $html_head;
 

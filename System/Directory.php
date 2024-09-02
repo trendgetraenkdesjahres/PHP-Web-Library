@@ -12,7 +12,8 @@ class Directory implements \Iterator
 
     public static function open(string $path = '.'): self
     {
-        return new Directory($path, null);
+        $dir = new Directory($path, null);
+        return $dir->read();
     }
 
     public function __construct(string $path, ?int $permissions = 0777)
@@ -47,7 +48,7 @@ class Directory implements \Iterator
 
     public function read(): static
     {
-        foreach (scandir($this->path) as $item_name) {
+        foreach (glob($this->path . "/*") as $item_name) {
             if ($item_name == '.' || $item_name == '..') {
                 continue;
             }
@@ -57,6 +58,11 @@ class Directory implements \Iterator
         return $this;
     }
 
+    /**
+     * Find pathnames matching a pattern
+     *
+     * @return FileHandle[]
+     */
     public function glob($pattern): array
     {
         if (is_int(strpos($pattern, DIRECTORY_SEPARATOR))) {
@@ -69,6 +75,11 @@ class Directory implements \Iterator
         return $this->glob_items($pattern);
     }
 
+    /**
+     * get_files()
+     *
+     * @return FileHandle[]
+     */
     public function get_files(): array
     {
         return $this->files;
@@ -137,8 +148,9 @@ class Directory implements \Iterator
     {
         if (is_file($path)) {
             return new FileHandle($path);
+        } else if (is_dir($path)) {
+            return Directory::open($path);
         }
-        return Directory::open($path);
     }
 
     public function delete_content(): static

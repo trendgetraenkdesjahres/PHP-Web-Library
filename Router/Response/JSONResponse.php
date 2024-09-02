@@ -1,14 +1,15 @@
 <?php
 
-namespace  PHP_Library\Router\ResponseTypes;
+namespace  PHP_Library\Router\Response;
 
-use PHP_Library\Router\Response;
+use PHP_Library\Router\Response\Traits\HTTPText;
 
 /**
  * JSONResponse is a specialized class for handling JSON responses.
  */
-class JSONResponse extends Response
+class JSONResponse extends AbstractResponse
 {
+    use HTTPText;
     public array $header =  ['Content-Type: application/json'];
 
     /**

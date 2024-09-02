@@ -2,6 +2,8 @@
 
 namespace  PHP_Library\Router;
 
+use PHP_Library\Element\Element;
+
 class Endpoint
 {
     public array $properties;
@@ -15,7 +17,7 @@ class Endpoint
      *
      * @param false|string $host [optional] The hostname for the API client.
      */
-    public function __construct(string $endpoint, public $method = 'get', public $response_class = 'HTMLResponse')
+    public function __construct(string $endpoint, public $method = 'get', public $response_class = 'HTML')
     {
         $this->endpoint = str_starts_with($endpoint, '/') ? $endpoint : "/$endpoint";
         Router::add_endpoint($this);
@@ -52,9 +54,18 @@ class Endpoint
         return $this;
     }
 
-    public function add_callback(callable $function): static
+    public function set_callback(callable $function): static
     {
         $this->callback[0] = $function;
+        return $this;
+    }
+
+    public function set_file(string $path, ?string $mime_type = null): static
+    {
+        if (!$mime_type) {
+            $mime_type = mime_content_type($path);
+        }
+        $this->content = "{$mime_type} {$path}";
         return $this;
     }
 
@@ -75,5 +86,10 @@ class Endpoint
             return call_user_func($this->callback[0], ...$args);
         }
         return null;
+    }
+
+    public function get_link(string $text): Element
+    {
+        return new Element('a', ['href' => $this->endpoint], $text);
     }
 }
