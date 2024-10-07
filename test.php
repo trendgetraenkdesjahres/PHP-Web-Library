@@ -1,20 +1,8 @@
 <?php
 
+use PHP_Library\Superglobals\Server;
+
 include 'ClassAutoloader.php';
 
-use AjaxHandler\AjaxScript;
-use Element\Element;
-use PHP_Library\Autoloader;
-use PHP_Library\SMTPClient\SMTP_Client;
 
-$autoload = new Autoloader();
-$autoload->init();
-
-$button = new Element('button', ['type' => 'submit', 'id' => '1234'], 'Submit');
-$test = new Element('form', ['id' => '123', 'method' => 'post', 'action' => ''], 'moin', $button);
-
-$script = new AjaxScript('123', 'submit');
-
-$script->add_interactive_element($button);
-
-echo $test . $script;
+var_dump(Server::$test);
