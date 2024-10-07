@@ -8,6 +8,7 @@ use PHP_Library\Router\RequestTypes\FormRequest;
 use PHP_Library\Router\RequestTypes\HTMLRequest;
 use PHP_Library\Router\RequestTypes\JSONRequest;
 use PHP_Library\Router\Response\AbstractResponse;
+use PHP_Library\Superglobals\Server;
 
 /**
  * RequestInterface defines the methods that should be implemented by request classes.
@@ -33,47 +34,37 @@ class Request
      */
     public static function get(): static
     {
-        if (substr(php_sapi_name(), 0, 3) == 'cli') {
+        if (Server::is_cli()) {
             return new CLIRequest();
         }
 
-        if (($_SERVER['REQUEST_METHOD'] == 'POST')) {
-            if (
-                isset($_SERVER['CONTENT_TYPE'])
-                && is_int(strpos($_SERVER['CONTENT_TYPE'], 'application/json'))
-            ) {
-                return new JSONRequest(
-                    method: 'post',
-                    resource_path: strtok($_SERVER["REQUEST_URI"], '?'),
-                    data: json_decode(
-                        json: file_get_contents("php://input"),
-                        associative: true
-                    )
-                );
-            }
+        if (Server::has_post_request()) {
+            switch (Server::get_post_request_content_type()) {
+                case 'application/json':
+                    return new JSONRequest(
+                        method: 'post',
+                        resource_path: Server::get_request_uri_path(),
+                        data: json_decode(
+                            json: file_get_contents("php://input"),
+                            associative: true
+                        )
+                    );
 
-            if (
-                isset($_SERVER['CONTENT_TYPE'])
-                && is_int(strpos($_SERVER['CONTENT_TYPE'], 'multipart/form-data'))
-            ) {
-                return new DataRequest(
-                    method: 'post',
-                    resource_path: strtok($_SERVER["REQUEST_URI"], '?'),
-                    data: array_merge($_POST, $_FILES)
-                );
-            }
+                case 'multipart/form-data':
+                    return new DataRequest(
+                        method: 'post',
+                        resource_path: Server::get_request_uri_path(),
+                        data: array_merge($_POST, $_FILES)
+                    );
 
-            if (
-                isset($_SERVER['CONTENT_TYPE'])
-                && is_int(strpos($_SERVER['CONTENT_TYPE'], 'application/x-www-form-urlencoded'))
-            ) {
-                return new FormRequest(
-                    method: 'post',
-                    resource_path: strtok($_SERVER["REQUEST_URI"], '?'),
-                    data: self::get_query_array(
-                        query: file_get_contents("php://input")
-                    )
-                );
+                case 'application/x-www-form-urlencoded':
+                    return new FormRequest(
+                        method: 'post',
+                        resource_path: strtok($_SERVER["REQUEST_URI"], '?'),
+                        data: self::get_query_array(
+                            query: file_get_contents("php://input")
+                        )
+                    );
             }
         }
 

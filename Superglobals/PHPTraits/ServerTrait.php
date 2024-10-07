@@ -40,6 +40,16 @@ trait ServerTrait
         return $_SERVER['SERVER_ADDR'] ?? false;
     }
 
+    /**
+     * Returns the Request Header "http content type" field.
+     *
+     * @return string|false The value of $_SERVER['CONTENT_TYPE'] or false if not set.
+     */
+    public static function get_content_type(): string|bool
+    {
+        return $_SERVER['CONTENT_TYPE'] ?? false;
+    }
+
 
     /**
      * Returns the port on the server used by the web server for communication.
