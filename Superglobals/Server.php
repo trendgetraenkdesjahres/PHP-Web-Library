@@ -78,10 +78,21 @@ class Server
             return throw new \Error('This Script is not Serving. There is no URL');
         }
         $port = self::get_port();
-        if (!$port) {
-            return self::get_server_protocol() .  self::get_server_name();
+        if (
+            isset($_SERVER['HTTPS']) &&
+            ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
+            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'
+        ) {
+            $protocol = 'https://';
+        } else {
+            $protocol = 'http://';
         }
-        return self::get_server_protocol() .  self::get_server_name() . ":$port";
+
+        if (!$port) {
+            return $protocol .  self::get_server_name();
+        }
+        return $protocol .  self::get_server_name() . ":$port";
     }
 
     /**

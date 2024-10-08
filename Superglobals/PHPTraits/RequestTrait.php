@@ -30,7 +30,7 @@ trait RequestTrait
      */
     public static function get_path(): string
     {
-        return static::$path = strtok(self::get_request_uri(), '?') ?? '';
+        return static::$path = strtok($_SERVER['REQUEST_URI'], '?') ?? '';
     }
 
     /**
