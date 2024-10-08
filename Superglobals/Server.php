@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Superglobals;
 
+use PHP_Library\Superglobals\PHPTraits\QueryTrait;
 use PHP_Library\Superglobals\PHPTraits\ServerTrait;
 
 /**
@@ -14,25 +15,14 @@ use PHP_Library\Superglobals\PHPTraits\ServerTrait;
 class Server
 {
     use ServerTrait;
+    use QueryTrait;
 
-    /**
-     * Returns the path part of the request URI, without any query parameters.
-     *
-     * @return string The request URI path.
-     */
-    public static function get_request_uri_path(): string
+    public static function get_request(): Post|Get
     {
-        return strtok(self::get_request_uri(), '?') ?? '';
-    }
-
-    /**
-     * Returns the query parameters of the request URI as an array.
-     *
-     * @return array The query parameters of the request URI, or an empty array if none.
-     */
-    public static function get_request_uri_parameters(): array
-    {
-        return parse_url(self::get_request_uri(), PHP_URL_QUERY);
+        if (self::has_post_request()) {
+            return new Post();
+        }
+        return new Get();
     }
 
     /**
@@ -43,27 +33,6 @@ class Server
     public static function has_post_request(): bool
     {
         return self::get_request_method() == 'POST';
-    }
-
-    /**
-     * Returns the content type of a POST request.
-     *
-     * @return string The content type of the POST request, or an empty string if not available.
-     */
-    public static function get_post_request_content_type(): string
-    {
-        return self::get_content_type() ?? '';
-    }
-
-    /**
-     * Checks if the POST request content type matches a given string.
-     *
-     * @param string $string The content type string to check for.
-     * @return bool True if the content type contains the given string, false otherwise.
-     */
-    public static function has_post_request_content_type(string $string): bool
-    {
-        return is_int(strpos(self::get_content_type(), $string));
     }
 
     /**
