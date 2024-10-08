@@ -42,7 +42,7 @@ class Server
      * @return string The URL to the file.
      * @throws \Error If the path is outside the document root.
      */
-    public function get_url_to_file(string $path): string
+    public static function get_url_to_file(string $path): string
     {
         // Absolute path
         if (str_starts_with($path, '/')) {
@@ -52,7 +52,7 @@ class Server
             $path = substr($path, strlen(self::get_document_root()));
         }
         // Relative path
-        return get_home_url() . '/' . $path;
+        return self::get_root_url() . '/' . $path;
     }
 
     /**
@@ -72,7 +72,7 @@ class Server
      * @return string The current URL.
      * @throws \Error If the script is not serving a request (i.e., it's running in CLI mode).
      */
-    public static function get_current_url(): string
+    public static function get_root_url(): string
     {
         if (! self::is_serving_http()) {
             return throw new \Error('This Script is not Serving. There is no URL');
