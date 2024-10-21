@@ -3,93 +3,63 @@
 namespace  PHP_Library\Router;
 
 use PHP_Library\Element\Element;
+use PHP_Library\Router\EndpointTypes\Callback;
+use PHP_Library\Router\EndpointTypes\PHPFile;
+use PHP_Library\Router\EndpointTypes\Redirect;
+use PHP_Library\Router\EndpointTypes\TextFile;
 
-class Endpoint
+abstract class Endpoint
 {
-    public array $properties;
-    public string $endpoint;
-    protected array $callback = [];
-    protected string $content = '';
+    public string $path;
 
-    /**
-     * Constructor for the Endpoint l istener.
-     * $response_type hhas to match a classname/filename for a Reponse type
-     *
-     * @param false|string $host [optional] The hostname for the API client.
-     */
-    public function __construct(string $endpoint, public $method = 'get', public $response_class = 'HTML')
+    public string $http_method;
+
+    public array $http_headers = [];
+
+    public int $status_code = 200;
+
+    abstract protected function constructor(mixed $content): static;
+
+    abstract public function get_content(): string|false;
+
+    static function new_callback_endpoint(string $path, callable $function, string $http_method = 'get'): Callback
     {
-        $this->endpoint = str_starts_with($endpoint, '/') ? $endpoint : "/$endpoint";
+        return new Callback($path, $function, $http_method);
+    }
+
+    static function new_php_file_endpoint(string $path, string $file, string $http_method = 'get'): PHPFile
+    {
+        return new PHPFile($path, $file, $http_method);
+    }
+
+    static function new_redirect_endpoint(string $path, string|Endpoint $location, int $code = 301, string $http_method = 'get'): Redirect
+    {
+        $endpoint = new Redirect($path, $location, $http_method);
+        $endpoint->status_code = $code;
+        return $endpoint;
+    }
+
+    static function new_text_file_endpoint(string $path, string $file, string $http_method = 'get'): TextFile
+    {
+        return new TextFile($path, $file, $http_method);
+    }
+
+    public function __construct(string $path, mixed $content, $http_method = 'get')
+    {
+        $this->path = str_starts_with($path, '/') ? $path : "/$path";
+        $this->http_method = $http_method;
+        $this->constructor($content);
         Router::add_endpoint($this);
     }
 
-    /* defines what keys are known for this enpoint, mostly for the get_help */
-    public function add_property(string $key, string $type = 'string', ?string $discription = null): Endpoint
+    public function add_http_header($field, $value): static
     {
-        if ($this->method === 'get') {
-            throw new \Error("Can't accept values by post method post");
-        }
-
-        $key_name_regex = '/^[a-zA-Z_\x80-\xff][a-zA-Z0-9_\x80-\xff]*$/';
-        if (!is_int(preg_match_all($key_name_regex, $key))) {
-            throw new \Error("'$key' is not a valid key.");
-        }
-        $php_types = [
-            "boolean",
-            "integer",
-            "double",
-            "string",
-            "array",
-            "object",
-            "resource",
-            "null"
-        ];
-        if (!in_array($type, $php_types)) {
-            throw new \Error("'$type' is not a valid php $type.");
-        }
-        $this->properties[$key] = [
-            'type' => $type,
-            'discription' => $discription,
-        ];
+        $this->http_headers[$field] = $value;
         return $this;
-    }
-
-    public function set_callback(callable $function): static
-    {
-        $this->callback[0] = $function;
-        return $this;
-    }
-
-    public function set_file(string $path, ?string $mime_type = null): static
-    {
-        if (!$mime_type) {
-            $mime_type = mime_content_type($path);
-        }
-        $this->content = "{$mime_type} {$path}";
-        return $this;
-    }
-
-    public function add_content(string $content): static
-    {
-        $this->content .= $content;
-        return $this;
-    }
-
-    public function get_content(): string
-    {
-        return $this->content;
-    }
-
-    public function exec_callback(mixed ...$args): mixed
-    {
-        if (isset($this->callback[0])) {
-            return call_user_func($this->callback[0], ...$args);
-        }
-        return null;
     }
 
     public function get_link(string $text): Element
     {
-        return new Element('a', ['href' => $this->endpoint], $text);
+        return new Element('a', ['href' => $this->path], $text);
     }
 }

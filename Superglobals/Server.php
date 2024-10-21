@@ -17,14 +17,6 @@ class Server
     use ServerTrait;
     use QueryTrait;
 
-    public static function get_request(): Post|Get
-    {
-        if (self::has_post_request()) {
-            return new Post();
-        }
-        return new Get();
-    }
-
     /**
      * Checks if the current request method is POST.
      *

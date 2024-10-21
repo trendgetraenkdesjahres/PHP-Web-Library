@@ -31,8 +31,8 @@ class ElementInteraction
     {
         $path = $prefix . $this->id;
         $endpoint = new Endpoint(
-            endpoint: $path,
-            method: $method,
+            path: $path,
+            http_method: $method,
             response_class: 'JSONResponse'
         );
         $this->endpoint = $path;

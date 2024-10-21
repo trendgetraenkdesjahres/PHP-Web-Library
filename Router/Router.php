@@ -2,97 +2,108 @@
 
 namespace  PHP_Library\Router;
 
-use PHP_Library\Router\Response\AbstractResponse;
+use PHP_Library\ClassTraits\SingletonPattern;
+use PHP_Library\Router\HTMLResponse\HTMLDoc;
+use PHP_Library\Superglobals\Get;
+use PHP_Library\Superglobals\Server;
 
 class Router
 {
+    use SingletonPattern;
 
-    public static array $endpoints = [];
-
-    private static Request $request;
-
-    private static self $instance;
+    protected static array $endpoints = [];
+    protected static array $html_templates = [];
+    public static Endpoint $current_endpoint;
 
     public static function add_endpoint(Endpoint &$endpoint)
     {
-        self::init();
-        self::$endpoints[$endpoint->method][$endpoint->endpoint] = $endpoint;
+        self::init_singleton();
+        self::$endpoints[strtoupper($endpoint->http_method)][$endpoint->path] = $endpoint;
     }
 
-    public static function get_request(): Request
+    public static function add_html_template(string $path, string $regex = ".*")
     {
-        return self::$request;
-    }
-
-    /* if not delcared otherwise by $response_type, reponse will be same type as request. (if possible) */
-    private static function response(Request $request)
-    {
-        $endpoint = self::get_endpoint($request->resource_path, $request->method);
-        self::response_if(
-            condition: !$endpoint,
-            content: "Not found",
-            code: 404
-        );
-        if ($endpoint->response_class == 'File') {
-            self::create_response($endpoint->get_content(), 200, 'File')->articulate();
-            die();
-        }
-
-        $content = $endpoint->exec_callback();
-        if (!$content) {
-            $content = $endpoint->get_content();
-        }
-        self::create_response($content, 200)->articulate();
-        die();
+        self::$html_templates[$regex] = $path;
     }
 
     private function __construct()
     {
-        self::$request = Request::get();
-        // auth middleware
-    }
-
-    private static function init(): self
-    {
-        if (!isset(self::$instance)) {
-            self::$instance = new self();
+        if (Server::is_serving_http()) {
+            header_register_callback([__CLASS__, 'php_header_callback']);
         }
-        return self::$instance;
     }
 
     public function __destruct()
     {
-        self::response(self::$request);
+        $content = static::current_endpoint()->get_content();
+        $status_code = static::current_endpoint()->status_code;
+        if ($content === false) {
+            $content = "Endpoint registred but no get_content().";
+            $status_code = 500;
+        }
+        self::send_status_code($status_code);
+        print(self::decode_content($content));
+        exit();
     }
 
-    protected static function response_if(bool $condition, string $content, int $code)
+    protected static function decode_content(mixed $content): string
     {
-        if ($condition) {
-            $response = self::create_response(
-                content: "Not found",
-                code: 404
-            );
-            $response->articulate();
-            die();
+
+        $client_accept_header = explode(',', Get::get_http_header_field('accept'));
+        switch ($client_accept_header[0]) {
+            case 'text/html':
+                return self::get_html_doc($content);
+                break;
+
+            case 'application/json':
+                return json_encode($content);
+
+            case 'application/xml':
+                return xmlrpc_encode($content);
+
+            default:
+                return (string) $content;
         }
     }
 
-    private static function create_response(mixed $content, int $code, ?string $endpoint_response_class = null): AbstractResponse
+    protected static function get_html_doc($content): string
     {
-        if ($endpoint_response_class === 'File') {
-            $type = 'File';
-        } else {
-            $type = self::get_request()->get_type();
+        foreach (self::$html_templates as $regex => $path) {
+            if (preg_match($regex, Get::get_path())) {
+                HTMLDoc::set_template_file($path);
+            }
         }
-        $response_class = __NAMESPACE__ . "\\Response\\{$type}Response";
-        return new $response_class($content, $code);
+        return HTMLDoc::get_rendered($content);
     }
 
-    public static function get_endpoint(string $resource_path, string $method): Endpoint|false
+    public static function php_header_callback()
     {
-        if (isset(self::$endpoints[$method][$resource_path])) {
-            return self::$endpoints[$method][$resource_path];
+        foreach (static::current_endpoint()->http_headers as $field => $value) {
+            if (is_array($value)) {
+                $value = rtrim(implode(';', $value), ";");
+            }
+            header("$field: $value");
         }
-        return false;
+    }
+
+    private static function current_endpoint(): Endpoint
+    {
+
+        if (isset(self::$current_endpoint)) {
+            return self::$current_endpoint;
+        }
+        $path = Get::get_path();
+        $method = Server::get_request_method();
+        if (! isset(self::$endpoints[$method][$path])) {
+            throw new \Error("No Round for $method '$path' defined.");
+        }
+        self::$current_endpoint = self::$endpoints[$method][$path];
+        return self::$current_endpoint;
+    }
+
+    private static function send_status_code(int $code, string $message = ''): void
+    {
+        http_response_code($code);
+        header(Server::get_protocol() . " " . trim("$code $message"));
     }
 }

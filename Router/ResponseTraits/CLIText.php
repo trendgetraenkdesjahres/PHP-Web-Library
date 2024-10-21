@@ -1,6 +1,6 @@
 <?php
 
-namespace  PHP_Library\Router\Response\Traits;
+namespace  PHP_Library\Router\ResponseTraits;
 
 trait CLIText
 {

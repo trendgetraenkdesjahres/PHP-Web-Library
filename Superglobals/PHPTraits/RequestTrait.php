@@ -2,6 +2,8 @@
 
 namespace PHP_Library\Superglobals\PHPTraits;
 
+use PHP_Library\Superglobals\Server;
+
 trait RequestTrait
 {
     use QueryTrait;
@@ -30,7 +32,7 @@ trait RequestTrait
      */
     public static function get_path(): string
     {
-        return static::$path = strtok(self::get_request_uri(), '?') ?? '';
+        return static::$path = strtok(Server::get_request_uri(), '?') ?? '';
     }
 
     /**
