@@ -34,7 +34,7 @@ class Server
      * @return string The URL to the file.
      * @throws \Error If the path is outside the document root.
      */
-    public function get_url_to_file(string $path): string
+    public static function get_url_to_file(string $path): string
     {
         // Absolute path
         if (str_starts_with($path, '/')) {
@@ -44,7 +44,7 @@ class Server
             $path = substr($path, strlen(self::get_document_root()));
         }
         // Relative path
-        return get_home_url() . '/' . $path;
+        return self::get_root_url() . '/' . $path;
     }
 
     /**
@@ -64,16 +64,27 @@ class Server
      * @return string The current URL.
      * @throws \Error If the script is not serving a request (i.e., it's running in CLI mode).
      */
-    public static function get_current_url(): string
+    public static function get_root_url(): string
     {
         if (! self::is_serving_http()) {
             return throw new \Error('This Script is not Serving. There is no URL');
         }
         $port = self::get_port();
-        if (!$port) {
-            return self::get_server_protocol() .  self::get_server_name();
+        if (
+            isset($_SERVER['HTTPS']) &&
+            ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
+            isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'
+        ) {
+            $protocol = 'https://';
+        } else {
+            $protocol = 'http://';
         }
-        return self::get_server_protocol() .  self::get_server_name() . ":$port";
+
+        if (!$port) {
+            return $protocol .  self::get_server_name();
+        }
+        return $protocol .  self::get_server_name() . ":$port";
     }
 
     /**
