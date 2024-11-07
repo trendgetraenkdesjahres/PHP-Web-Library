@@ -11,7 +11,7 @@ class Router
 {
     use SingletonPattern;
 
-    protected static array $endpoints = [];
+    public static array $endpoints = [];
     protected static array $html_templates = [];
     public static Endpoint $current_endpoint;
 

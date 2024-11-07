@@ -18,6 +18,8 @@ abstract class Endpoint
 
     public int $status_code = 200;
 
+    protected string $title;
+
     abstract protected function constructor(mixed $content): static;
 
     abstract public function get_content(): string|false;
@@ -58,8 +60,25 @@ abstract class Endpoint
         return $this;
     }
 
-    public function get_link(string $text): Element
+    public function get_link(?string $text = null): Element
     {
-        return new Element('a', ['href' => $this->path], $text);
+        if ($text) {
+            return new Element('a', ['href' => $this->path], $text);
+        }
+        if ($this->title) {
+            return new Element('a', ['href' => $this->path], $this->title);
+        }
+        return new Element('a', ['href' => $this->path], '@');
+    }
+
+    public function set_title(string $title): static
+    {
+        $this->title = $title;
+        return $this;
+    }
+
+    public function get_title(): string
+    {
+        return $this->title;
     }
 }

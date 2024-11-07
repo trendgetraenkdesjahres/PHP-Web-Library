@@ -17,7 +17,7 @@ class PHPFile extends Endpoint
     {
         ob_start();
         require $this->file;
-        return ob_get_flush();
+        return ob_get_clean();
     }
 
     protected function constructor(mixed $file): static
