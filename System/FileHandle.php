@@ -37,6 +37,9 @@ class FileHandle
 
 
         if ($this->lock_file) {
+            if (!is_writable($this->path)) {
+                throw new \Error("Can't write to '{$this->path} as '" . posix_getpwuid(posix_geteuid())['name'] . "'");
+            }
             while (!@mkdir($this->path . ".lock")) {
                 usleep($microseconds_freq);
                 // TODO limit einstellen

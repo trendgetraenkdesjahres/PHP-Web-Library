@@ -34,7 +34,7 @@ trait FormatTrait
         $open_brackets = 0;
         foreach ($trace as $caller) {
             if (isset($caller['type'])) {
-                if ($caller['class'] === get_class() || $caller['class'] === get_called_class()) {
+                if ($caller['class'] === get_called_class() || $caller['class'] === get_called_class()) {
                     continue;
                 }
                 $open_brackets++;
