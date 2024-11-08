@@ -20,7 +20,13 @@ class Post
         return $_SERVER['CONTENT_TYPE'];
     }
 
-    public static function get_content(): mixed
+    public static function extract_content(): int
+    {
+        $content = static::get_content();
+        return extract($content);
+    }
+
+    public static function get_content(): array
     {
         if (isset(static::$content)) {
             return static::$content;

@@ -34,6 +34,7 @@ class FileStorage extends DataStorage
 
 
         self::$file = new FileHandle($path);
+
         try {
             self::$file
                 ->create_file(force: false)

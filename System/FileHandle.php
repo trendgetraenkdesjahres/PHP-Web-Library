@@ -2,7 +2,7 @@
 
 namespace  PHP_Library\System;
 
-use PHP_Library\Notices\Warning;
+use PHP_Library\Error\Warning;
 
 class FileHandle
 {
@@ -34,6 +34,8 @@ class FileHandle
 
     public function open_file(string $fopen_mode = 'r', bool $load_file = true, int $microseconds_freq = 100): FileHandle
     {
+
+
         if ($this->lock_file) {
             while (!@mkdir($this->path . ".lock")) {
                 usleep($microseconds_freq);
@@ -77,6 +79,7 @@ class FileHandle
 
     public function create_file(bool $force = false): FileHandle
     {
+
         if ($force) {
             $stream = fopen($this->path, 'w');
         } else {
