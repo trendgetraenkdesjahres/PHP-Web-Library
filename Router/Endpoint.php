@@ -79,6 +79,6 @@ abstract class Endpoint
 
     public function get_title(): string
     {
-        return $this->title;
+        return $this->title ?? '';
     }
 }

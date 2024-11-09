@@ -15,7 +15,7 @@ class FileHandle
 
     public function __construct(string $path, bool $lock_file = true)
     {
-        $this->path = realpath($path);
+        $this->path = file_exists($path) ? realpath($path) : $path;
         $this->name = pathinfo($path, PATHINFO_BASENAME);
         $this->lock_file = $lock_file;
     }
@@ -34,8 +34,6 @@ class FileHandle
 
     public function open_file(string $fopen_mode = 'r', bool $load_file = true, int $microseconds_freq = 100): FileHandle
     {
-
-
         if ($this->lock_file) {
             if (!is_writable($this->path)) {
                 throw new \Error("Can't write to '{$this->path} as '" . posix_getpwuid(posix_geteuid())['name'] . "'");
@@ -82,7 +80,6 @@ class FileHandle
 
     public function create_file(bool $force = false): FileHandle
     {
-
         if ($force) {
             $stream = fopen($this->path, 'w');
         } else {

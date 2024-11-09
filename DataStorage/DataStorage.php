@@ -5,6 +5,7 @@ namespace  PHP_Library\DataStorage;
 use PHP_Library\DataStorage\Table\AbstractTable;
 use PHP_Library\DataStorage\Tables\DataStorageTableInterface;
 use PHP_Library\DataStorage\Table\Column;
+use PHP_Library\Error\Error;
 use  PHP_Library\Settings\Settings;
 
 
@@ -32,7 +33,7 @@ abstract class DataStorage
             FileStorage::initalize();
             return FileStorage::get_table($name);
         } else {
-            throw new \Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
+            throw new Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
         }
     }
 
@@ -66,13 +67,15 @@ abstract class DataStorage
             if (DatabaseStorage::initalize()) {
                 return DatabaseStorage::table_exists($name);
             }
+            throw new Error("Unable to initalize DatabaseStorage");
         }
         if (Settings::get('datastorage/file_name')) {
             if (FileStorage::initalize()) {
                 return FileStorage::table_exists($name);
             }
+            throw new Error("Unable to initalize FileStorage");
         } else {
-            throw new \Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
+            throw new Error("No Setting for 'datastorage/database_name' or 'datastorage/file_name' found.");
         }
     }
 }

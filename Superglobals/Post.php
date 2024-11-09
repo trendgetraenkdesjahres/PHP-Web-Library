@@ -39,7 +39,6 @@ class Post
         if (self::get_content_type() === 'multipart/form-data') {
             return static::$content = array_merge($_POST, $_FILES);
         }
-
         return static::$content = $_POST;
     }
 }
