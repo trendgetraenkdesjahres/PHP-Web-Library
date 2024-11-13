@@ -1,6 +1,6 @@
 rewrite File Query (viel zu lange methode :())
-rewrite DataStorage with traits for File & DB
-rewrite DataStorageTable with traits for File & DB
+rewrite Database with traits for File & DB
+rewrite DatabaseTable with traits for File & DB
 
 add META-Table Support
 add class loader (Helperclasses/index.php)

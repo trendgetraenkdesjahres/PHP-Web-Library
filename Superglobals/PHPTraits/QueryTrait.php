@@ -22,7 +22,7 @@ trait QueryTrait
             foreach ($array as $value) {
                 if (strpos($value, '=')) {
                     $key_value = explode('=', $value);
-                    $return[$key_value[0]] = $key_value[1];
+                    $return[$key_value[0]] = urldecode($key_value[1]);
                 } else {
                     $return[$value] = true;
                 }

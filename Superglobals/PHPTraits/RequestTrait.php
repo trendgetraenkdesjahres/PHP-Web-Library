@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Superglobals\PHPTraits;
 
+use PHP_Library\Error\Error;
 use PHP_Library\Superglobals\Server;
 
 trait RequestTrait
@@ -10,7 +11,7 @@ trait RequestTrait
 
     public static array $query;
     public static string $path;
-    public static string $http_header;
+    public static array $http_header;
 
     public static function get_http_header(): array
     {
@@ -45,10 +46,13 @@ trait RequestTrait
         return static::$query = self::parse_query();
     }
 
-    public static function get_query_field(string $name): array|bool
+    public static function get_query_field(string $name): int|string|array|false
     {
         if (!isset(static::$query)) {
-            self::get_query();
+            static::get_query();
+        }
+        if (!isset(static::$query[$name])) {
+            return false;
         }
         return static::$query[$name];
     }

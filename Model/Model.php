@@ -2,9 +2,9 @@
 
 namespace  PHP_Library\Model;
 
-use  PHP_Library\DataStorage\DataStorage;
-use  PHP_Library\DataStorage\DataStorageTableInterface;
-use  PHP_Library\DataStorage\TableColumn;
+use  PHP_Library\Database\Database;
+use  PHP_Library\Database\DatabaseTableInterface;
+use  PHP_Library\Database\TableColumn;
 use  PHP_Library\Debug\Debug;
 use  PHP_Library\Notices\Warning;
 
@@ -26,20 +26,20 @@ abstract class Model
     /**
      * Get access to all the data of the class
      *
-     * @return DataStorageTableInterface
+     * @return DatabaseTableInterface
      */
-    private static function access_data(): DataStorageTableInterface
+    private static function access_data(): DatabaseTableInterface
     {
         if (!self::$initialized) {
             self::init_model();
         }
-        return DataStorage::get_table(get_called_class());
+        return Database::get_table(get_called_class());
     }
 
     final public static function init_model()
     {
         $class = get_called_class();
-        if (!DataStorage::table_exists($class)) {
+        if (!Database::table_exists($class)) {
             PHP_Library\Warning::trigger("'" . $class . "' has no table yet. will create one");
             self::create_table($class);
         }
@@ -66,16 +66,16 @@ abstract class Model
                 nullable: $property_reflection->getType()->allowsNull()
             ));
         }
-        DataStorage::create_table($class, ...$columns);
+        Database::create_table($class, ...$columns);
     }
 
     /**
      * Add in instance of this class
      *
      * @param array $property_value_pairs The data must represent the declared properties of the class.
-     * @return DataStorageTableInterface
+     * @return DatabaseTableInterface
      */
-    final static function add_instance(array $property_value_pairs): DataStorageTableInterface
+    final static function add_instance(array $property_value_pairs): DatabaseTableInterface
     {
         return self::access_data()->add_row($property_value_pairs);
     }

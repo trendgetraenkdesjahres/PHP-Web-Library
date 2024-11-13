@@ -8,16 +8,20 @@ class FileHandle
 {
     public string $path;
     public string $name;
-    private bool $lock_file;
+
+    private bool $use_lock_file;
+    private string $lock_file_path;
 
     private mixed $file_handle = null;
     private mixed $memory = null;
 
-    public function __construct(string $path, bool $lock_file = true)
+    public function __construct(string $path, bool $use_lock_file = true)
     {
         $this->path = file_exists($path) ? realpath($path) : $path;
         $this->name = pathinfo($path, PATHINFO_BASENAME);
-        $this->lock_file = $lock_file;
+        if ($this->use_lock_file = $use_lock_file) {
+            $this->lock_file_path = $this->path . '.lock';
+        }
     }
 
     public function __destruct()
@@ -32,15 +36,19 @@ class FileHandle
         return $this->path;
     }
 
-    public function open_file(string $fopen_mode = 'r', bool $load_file = true, int $microseconds_freq = 100): FileHandle
+    public function open_file(string $fopen_mode = 'r', bool $load_file = true, int $microseconds_freq = 100, int $timeout_seconds = 1): FileHandle
     {
-        if ($this->lock_file) {
+        if ($this->use_lock_file) {
             if (!is_writable($this->path)) {
                 throw new \Error("Can't write to '{$this->path} as '" . posix_getpwuid(posix_geteuid())['name'] . "'");
             }
-            while (!@mkdir($this->path . ".lock")) {
+            $start_time = microtime(true);
+            while (!@mkdir($this->lock_file_path)) {
                 usleep($microseconds_freq);
-                // TODO limit einstellen
+                // Check if the time limit has been exceeded
+                if ((microtime(true) - $start_time) >= $timeout_seconds) {
+                    throw new \Error("Timeout exceeded: File was locked from different process for more than {$timeout_seconds} seconds.");
+                }
             }
         }
         if (!$this->file_handle = fopen($this->path, $fopen_mode)) {
@@ -61,8 +69,8 @@ class FileHandle
         if (get_resource_type($this->file_handle) == 'stream') {
             fclose($this->file_handle);
         }
-        if ($this->lock_file) {
-            @rmdir($this->path . ".lock");
+        if ($this->use_lock_file) {
+            @rmdir($this->lock_file_path);
         }
         return $this;
     }

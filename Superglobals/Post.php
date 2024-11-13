@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Superglobals;
 
+use PHP_Library\Error\Warning;
 use PHP_Library\Superglobals\PHPTraits\RequestTrait;
 
 class Post
@@ -20,25 +21,51 @@ class Post
         return $_SERVER['CONTENT_TYPE'];
     }
 
-    public static function extract_content(): int
-    {
-        $content = static::get_content();
-        return extract($content);
-    }
-
-    public static function get_content(): array
+    public static function get_content_field(string $key): mixed
     {
         if (isset(static::$content)) {
-            return static::$content;
+            static::set_content();
+        }
+        if (!isset(static::$content[$key])) {
+            Warning::trigger("Undefined Post Field '{$key}'");
+            return null;
+        }
+        return static::$content[$key];
+    }
+
+    /**
+     * Undocumented function
+     *
+     * @param string ...$key If multiple, it will check with AND-operator
+     * @return boolean
+     */
+    public static function has_content_field(string ...$key): bool
+    {
+        if (isset(static::$content)) {
+            static::set_content();
+        }
+        foreach ($key as $key) {
+            if (!isset(static::$content[$key])) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    protected static function set_content(): void
+    {
+        if (isset(static::$content)) {
+            return;
         }
 
         if (self::get_content_type() === 'application/json') {
-            return static::$content = json_decode(file_get_contents("php://input"), true);
+            $json = json_decode(file_get_contents("php://input"), true);
+            static::$content = $json ? $json : [];
         }
 
         if (self::get_content_type() === 'multipart/form-data') {
-            return static::$content = array_merge($_POST, $_FILES);
+            static::$content = array_merge($_POST, $_FILES);
         }
-        return static::$content = $_POST;
+        static::$content = $_POST;
     }
 }
