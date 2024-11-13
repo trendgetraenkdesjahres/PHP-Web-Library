@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Database\FileDatabaseAggregate;
 
+use PHP_Library\Database\Database;
 use PHP_Library\Database\Error\DatabaseError;
 use PHP_Library\Database\FileDatabase;
 use PHP_Library\Database\SQLanguage\Statement\Delete;
@@ -74,7 +75,9 @@ trait FileDatabaseAggregate
         $row_ids = static::get_row_ids_from_where_clause($sql_statement);
         $updated_rows = 0;
         foreach ($row_ids as $row_id) {
-            static::set_row($table_name, $row_id, $sql_statement->update_cells);
+            foreach ($sql_statement->update_cells as $column_name => $value) {
+                static::set_cell($table_name, $column_name, $row_id, $value);
+            }
         }
         return $updated_rows;
     }
