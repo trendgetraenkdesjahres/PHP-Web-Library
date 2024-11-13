@@ -23,7 +23,7 @@ class Post
 
     public static function get_content_field(string $key): mixed
     {
-        if (isset(static::$content)) {
+        if (! isset(static::$content)) {
             static::set_content();
         }
         if (!isset(static::$content[$key])) {
@@ -39,12 +39,12 @@ class Post
      * @param string ...$key If multiple, it will check with AND-operator
      * @return boolean
      */
-    public static function has_content_field(string ...$key): bool
+    public static function has_content_field(string ...$keys): bool
     {
-        if (isset(static::$content)) {
+        if (! isset(static::$content)) {
             static::set_content();
         }
-        foreach ($key as $key) {
+        foreach ($keys as $key) {
             if (!isset(static::$content[$key])) {
                 return false;
             }

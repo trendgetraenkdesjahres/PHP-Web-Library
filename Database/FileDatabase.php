@@ -7,6 +7,7 @@ use PHP_Library\Database\FileDatabaseAggregate\FileDatabaseAggregate;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
 use PHP_Library\Database\Table\Column;
 use PHP_Library\Database\Table\FileTable;
+use PHP_Library\Error\Warning;
 use  PHP_Library\Settings\Settings;
 use  PHP_Library\System\FileHandle;
 use ReflectionClass;
