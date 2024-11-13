@@ -78,6 +78,7 @@ trait FileDatabaseAggregate
             foreach ($sql_statement->update_cells as $column_name => $value) {
                 static::set_cell($table_name, $column_name, $row_id, $value);
             }
+            $updated_rows++;
         }
         return $updated_rows;
     }

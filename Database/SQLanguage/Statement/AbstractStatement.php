@@ -33,7 +33,6 @@ abstract class AbstractStatement
      */
     public function execute(): bool
     {
-        var_dump($this);
         return Database::query($this);
     }
 
