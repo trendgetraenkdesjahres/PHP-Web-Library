@@ -38,7 +38,7 @@ abstract class DataTable
     }
 
     /**
-     * Delete a row of the table.
+     * Delete a row of the table directly (will be executed directly).
      * Values need to be in order of the columns.
      *
      * @param int $id The ID of the row.
@@ -65,7 +65,7 @@ abstract class DataTable
     }
 
     /**
-     * Inser a new row into the table.
+     * Inserts a new row into the table directly (will be executed directly).
      * Values need to be in order of the columns.
      *
      * @param string|int|float $values Values in the order of the columns.
@@ -103,7 +103,7 @@ abstract class DataTable
     }
 
     /**
-     * Select and get a row from the table by its ID.
+     * Select and get a row from the table by its ID directly (will be executed directly).
      *
      * @param int $id The ID of the row.
      * @return array The row data.
