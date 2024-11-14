@@ -52,9 +52,6 @@ class Cookie
      */
     public static function set(string $name, string|array|int|float $value, ?int $expire_in_seconds = 0, string $path = "", string $domain = "", bool $secure = false, bool $httponly = false): bool
     {
-        if (headers_sent($file, $line)) {
-            throw new CookieError("Headers already sent in {$file}:{$line}");
-        }
         if (is_null($expire_in_seconds)) {
             $expires_or_options = 1;
         } else if ($expire_in_seconds === 0) {
@@ -75,17 +72,25 @@ class Cookie
         return setcookie($name, $value, $expires_or_options, $path, $domain, $secure, $httponly);
     }
 
-    public static function unset($name): bool
+    public static function unset(string ...$names): bool
     {
-        if (isset($_COOKIE[$name])) {
-            unset($_COOKIE[$name]);
-        }
-        if (isset(static::$cookie_parameters[$name])) {
-            $path = static::$cookie_parameters[$name]['path'];
-            $domain = static::$cookie_parameters[$name]['domain'];
-            $secure = static::$cookie_parameters[$name]['secure'];
-            $httponly = static::$cookie_parameters[$name]['httponly'];
-            return static::set($name, '', null, $path, $domain, $secure, $httponly);
+        foreach ($names as $name) {
+            if (isset($_COOKIE[$name])) {
+                unset($_COOKIE[$name]);
+            }
+            if (isset(static::$cookie_parameters[$name])) {
+                $path = static::$cookie_parameters[$name]['path'];
+                $domain = static::$cookie_parameters[$name]['domain'];
+                $secure = static::$cookie_parameters[$name]['secure'];
+                $httponly = static::$cookie_parameters[$name]['httponly'];
+                if (!static::set($name, '', null, $path, $domain, $secure, $httponly)) {
+                    return false;
+                }
+            } else {
+                if (!static::set($name, '', null)) {
+                    return false;
+                }
+            }
         }
         return true;
     }

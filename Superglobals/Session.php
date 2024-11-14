@@ -4,6 +4,9 @@ namespace PHP_Library\Superglobals;
 
 use PHP_Library\Superglobals\Error\SessionError;
 
+/**
+ * Session is started by most of the methods. It must be started prior the first output. Use `Session::start()`, if the first other method is called within output.
+ */
 class Session
 {
     public static string $name;
@@ -24,9 +27,7 @@ class Session
 
     public static function get(string $key): mixed
     {
-        if (is_null(static::$id)) {
-            throw new SessionError("Session not started.");
-        }
+        static::initialize();
         if (!isset($_SESSION[$key])) {
             return null;
         }
@@ -35,24 +36,23 @@ class Session
 
     public static function set(string $key, mixed $value): void
     {
-        if (is_null(static::$id)) {
-            throw new SessionError("Session not started.");
-        }
+        static::initialize();
         $_SESSION[$key] = $value;
     }
 
-    public static function unset(?string $key = null): bool
+    public static function unset(?string $key = null, ?string ...$keys): bool
     {
-        if (is_null(static::$id)) {
-            throw new SessionError("Session not started.");
+        static::initialize();
+        if (is_null($key) && !empty($keys)) {
+            throw new SessionError("When unsetting the whole session, just `Session::unset(null)`.");
         }
         if (is_null($key)) {
             return session_unset();
         }
-        if (!isset($_SESSION[$key])) {
-            throw new SessionError("Undefined Session key '{$key}'.");
+        $keys = array_merge([$key], $keys);
+        foreach ($keys as $keys) {
+            unset($_SESSION[$keys]);
         }
-        unset($_SESSION[$key]);
         return true;
     }
 
@@ -74,5 +74,13 @@ class Session
             $params["secure"],
             $params["httponly"]
         );
+    }
+
+    protected static function initialize(): bool
+    {
+        if (is_null(static::$id)) {
+            return static::start();
+        }
+        return true;
     }
 }

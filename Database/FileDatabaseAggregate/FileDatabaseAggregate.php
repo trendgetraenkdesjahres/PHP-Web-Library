@@ -92,6 +92,11 @@ trait FileDatabaseAggregate
     private static function get_row_ids_from_where_clause(Select|Delete|Update $sql_statement): array
     {
         $table_name = $sql_statement->table;
+        if (! $sql_statement->get_where_clause()) {
+            // assuming the first column is complete
+            $first_column = array_key_first(FileDatabase::$data[$table_name]);
+            return array_keys(FileDatabase::$data[$table_name][$first_column]);
+        }
         $row_ids = [];
         foreach ($sql_statement->get_where_objs() as $and_or_or => $where_clause) {
             $l_operant = $where_clause->lhs;
@@ -148,7 +153,10 @@ trait FileDatabaseAggregate
         if ($select_column === "*") {
             $select_columns = array_keys(FileDatabase::$data[$table]);
         } else {
-            $select_columns = [$select_column] + $select_columns;
+            $select_columns = array_merge([$select_column], $select_columns);
+            $select_columns = array_map(function ($value) {
+                return trim($value);
+            }, $select_columns);
         }
         $row = [];
         foreach (FileDatabase::$data[$table] as $column => $entries) {

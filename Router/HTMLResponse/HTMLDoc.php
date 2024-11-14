@@ -32,6 +32,12 @@ class HTMLDoc
         return $html_doc;
     }
 
+    /**
+     * set template file. to populate it with content, use the `$content` variable inside the file.
+     *
+     * @param string $path
+     * @return void
+     */
     public static function set_template_file(string $path)
     {
         static::$template_file = $path;
