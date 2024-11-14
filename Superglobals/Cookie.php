@@ -87,6 +87,7 @@ class Cookie
             $httponly = static::$cookie_parameters[$name]['httponly'];
             return static::set($name, '', null, $path, $domain, $secure, $httponly);
         }
+        return true;
     }
 
     protected static function decode_str_to_array(string $string): array|false
@@ -97,7 +98,7 @@ class Cookie
         }
         foreach (explode('&', $string) as $key_value_str) {
             $kv = explode('=', $key_value_str);
-            if (count($key_value_strings) === 1 && !$kv) {
+            if (count($key_value_strings) === 1 && count($kv) === 1) {
                 return false;
             }
             $key = urldecode($kv[0]);
