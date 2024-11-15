@@ -7,8 +7,9 @@ use PHP_Library\Router\EndpointTypes\Callback;
 use PHP_Library\Router\EndpointTypes\PHPFile;
 use PHP_Library\Router\EndpointTypes\Redirect;
 use PHP_Library\Router\EndpointTypes\TextFile;
+use Stringable;
 
-abstract class Endpoint
+abstract class Endpoint implements Stringable
 {
     public string $path;
 
@@ -80,5 +81,10 @@ abstract class Endpoint
     public function get_title(): string
     {
         return $this->title ?? '';
+    }
+
+    public function __toString(): string
+    {
+        return $this->path;
     }
 }

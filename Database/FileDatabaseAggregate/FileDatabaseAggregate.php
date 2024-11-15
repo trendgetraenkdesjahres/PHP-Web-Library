@@ -2,13 +2,13 @@
 
 namespace PHP_Library\Database\FileDatabaseAggregate;
 
-use PHP_Library\Database\Database;
 use PHP_Library\Database\Error\DatabaseError;
 use PHP_Library\Database\FileDatabase;
 use PHP_Library\Database\SQLanguage\Statement\Delete;
 use PHP_Library\Database\SQLanguage\Statement\Insert;
 use PHP_Library\Database\SQLanguage\Statement\Select;
 use PHP_Library\Database\SQLanguage\Statement\Update;
+use PHP_Library\Database\Table\FileTable;
 
 trait FileDatabaseAggregate
 {
@@ -16,10 +16,10 @@ trait FileDatabaseAggregate
     {
         $row_ids = self::get_row_ids_from_where_clause($sql_statement);
         $deleted_rows = 0;
-        foreach (FileDatabase::$data[$sql_statement->table] as $column) {
+        foreach (FileDatabase::$data[$sql_statement->table] as $column_name => $column) {
             foreach ($row_ids as $i => $row_id) {
-                unset($column[$row_id]);
-                if ($i === array_key_last($row_ids)) {
+                unset(FileDatabase::$data[$sql_statement->table][$column_name][$row_id]);
+                if ($column_name === array_key_last(FileDatabase::$data[$sql_statement->table])) {
                     $deleted_rows++;
                 }
             }
@@ -36,11 +36,19 @@ trait FileDatabaseAggregate
         $row_cells = [];
         if (! $sql_statement->columns_string || $sql_statement->columns_string == "*") {
             foreach ($columns_info as $column_name => $column_property) {
-                $row_cells[$column_name] = array_shift($values);
+                if ($column_property['auto_increment']) {
+                    $row_cells[$column_name] = null;
+                } else {
+                    $row_cells[$column_name] = array_shift($values);
+                }
             }
         } else {
             foreach ($sql_statement->columns as $column_name) {
-                $row_cells[$column_name] = array_shift($values);
+                if ($columns_info[$column_name]['auto_increment']) {
+                    $row_cells[$column_name] = null;
+                } else {
+                    $row_cells[$column_name] = array_shift($values);
+                }
             }
         }
         $sql_statement->values_clause;
@@ -152,6 +160,9 @@ trait FileDatabaseAggregate
     {
         if ($select_column === "*") {
             $select_columns = array_keys(FileDatabase::$data[$table]);
+            // hide the row_id column.
+            $row_id_column = array_search(FileTable::$id_column_name, $select_columns);
+            unset($select_columns[$row_id_column]);
         } else {
             $select_columns = array_merge([$select_column], $select_columns);
             $select_columns = array_map(function ($value) {
@@ -283,7 +294,14 @@ trait FileDatabaseAggregate
 
     private static function get_columns_info(string $table_name): array
     {
-        return FileDatabase::$data['%tables'][$table_name];
+        $columns_info = FileDatabase::$data['%tables'][$table_name];
+        unset($columns_info['%primary_key']);
+        return $columns_info;
+    }
+
+    private static function get_primary_key(string $table_name): string
+    {
+        return FileDatabase::$data['%tables'][$table_name]['%primary_key'];
     }
 
     private static function set_cell(string $table_name, string $column_name, int $row_id, mixed $value = null): bool
@@ -292,12 +310,26 @@ trait FileDatabaseAggregate
         if (! key_exists($column_name, $columns_info)) {
             return false;
         }
+        $primary_key = static::get_primary_key($table_name);
+        if ($column_name == $primary_key) {
+            if (false !== array_search($value, FileDatabase::$data[$table_name][$column_name], true)) {
+                DatabaseError::trigger("$table_name.$column_name (primary key) must be unique.");
+            }
+            return false;
+        }
+        if ($columns_info[$column_name]['auto_increment']) {
+            $last_ai_value_key = array_key_last(FileDatabase::$data[$table_name][$column_name]);
+            $last_ai_value = is_null($last_ai_value_key) ? 0 : FileDatabase::$data[$table_name][$column_name][$last_ai_value_key];
+            FileDatabase::$data[$table_name][$column_name][$row_id] = $last_ai_value + 1;
+            return true;
+        }
         if ($columns_info[$column_name]['timestamp']) {
             FileDatabase::$data[$table_name][$column_name][$row_id] = date('Y-m-d H:i:s', time());
             return true;
         }
         if (! static::is_value_in_column_allowed($table_name, $column_name, $value)) {
             DatabaseError::trigger("Value for '$column_name' needs to be type of '{$columns_info[$column_name]['type']}' in '$table_name'.");
+            return false;
         }
         FileDatabase::$data[$table_name][$column_name][$row_id] = $value;
         return true;
@@ -308,13 +340,23 @@ trait FileDatabaseAggregate
         $columns_info = static::get_columns_info($table_name);
         $set_cells = 0;
         foreach ($columns_info as $column_name => $column_property) {
-            if (!isset($row_cells[$column_name]) && !$column_property['nullable']) {
-                DatabaseError::trigger("$table_name.$column_name can not be empty/null");
+            // if it's an auto increment column but a value is given.
+            if ($column_property['auto_increment'] && isset($row_cells[$column_name]) && $row_cells[$column_name]) {
+                DatabaseError::trigger("$table_name.$column_name is an auto increment column. can not accept value other than null.");
             }
-            $value = $row_cells[$column_name];
+            // if the value is not set / empty.
+            if ((!isset($row_cells[$column_name]) || ! $row_cells[$column_name]) && !$column_property['nullable']) {
+                // exception: auto increment will always be unset. set it here to null,
+                if (! $column_property['auto_increment']) {
+                    DatabaseError::trigger("$table_name.$column_name can not be empty/null");
+                } else {
+                    $row_cells[$column_name] = null;
+                }
+            } else {
+                $value = $row_cells[$column_name];
+            }
             unset($row_cells[$column_name]);
-            static::set_cell($table_name, $column_name, $row_id, $value);
-            $set_cells++;
+            $set_cells = $set_cells + (int) static::set_cell($table_name, $column_name, $row_id, $value);
         }
         if (!empty($row_cells)) {
             DatabaseError::trigger("Missing keys: " . implode(', ', array_keys($row_cells)));
@@ -327,13 +369,18 @@ trait FileDatabaseAggregate
         $columns_info = static::get_columns_info($table_name);
         $set_cells = 0;
         foreach ($columns_info as $column_name => $column_property) {
+            $new_row_id = isset($new_row_id) ? $new_row_id : array_key_last(FileDatabase::$data[$table_name][$column_name]) + 1;
+            if ($column_property['auto_increment']) {
+                $current_auto_increment_value = isset(FileDatabase::$data[$table_name][$column_name][$new_row_id - 1]) ? FileDatabase::$data[$table_name][$column_name][$new_row_id - 1] : 0;
+                static::set_cell($table_name, $column_name, $new_row_id, $current_auto_increment_value);
+                continue;
+            }
             if (!isset($row_cells[$column_name]) && !$column_property['nullable']) {
                 DatabaseError::trigger("$table_name.$column_name can not be empty/null");
             }
-            $new_id = isset($new_id) ? $new_id : count(FileDatabase::$data[$table_name][$column_name]);
             $value = $row_cells[$column_name];
             unset($row_cells[$column_name]);
-            static::set_cell($table_name, $column_name, $new_id, $value);
+            static::set_cell($table_name, $column_name, $new_row_id, $value);
             $set_cells++;
         }
         return $set_cells;

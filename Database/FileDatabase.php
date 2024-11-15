@@ -5,7 +5,9 @@ namespace  PHP_Library\Database;
 use PHP_Library\Database\Error\DatabaseError;
 use PHP_Library\Database\FileDatabaseAggregate\FileDatabaseAggregate;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
-use PHP_Library\Database\Table\Column;
+use PHP_Library\Database\Table\Column\Column;
+use PHP_Library\Database\Table\Column\PrimaryAutoIncrementKey;
+use PHP_Library\Database\Table\Column\PrimaryKey;
 use PHP_Library\Database\Table\FileTable;
 use PHP_Library\Error\Warning;
 use  PHP_Library\Settings\Settings;
@@ -71,7 +73,7 @@ class FileDatabase extends Database
      * Create a table with the given name and columns.
      *
      * @param string $table The name of the table.
-     * @param TableColumn ...$columns The columns to create.
+     * @param Column ...$columns The columns to create.
      * @return bool Returns true if the table is created, false if it already exists.
      */
     public static function create_table(string $table, Column ...$columns): bool
@@ -81,16 +83,28 @@ class FileDatabase extends Database
                 Warning::trigger("'$table' already exists. Not created.");
                 return false;
             }
-
-            //meta table-info table
-            if (!key_exists('%tables', self::$data)) {
-                new FileTable('%tables', true);
-            }
         } else {
             self::$data = [];
         }
+        // check primary Key: there has be exactly one and in first place
+        $primary_key_columns = [];
+        foreach ($columns as $i => $column) {
+            if (isset($column->is_primary_key)) {
+                $primary_key_columns[] = $i;
+            }
+        }
+        if (empty($primary_key_columns)) {
+            $primary_key = new PrimaryAutoIncrementKey(FileTable::$id_column_name);
+            array_unshift($columns, $primary_key);
+        } else if (count($primary_key_columns) === 1) {
+            $primary_key = $columns[$primary_key_columns[0]];
+        } else {
+            throw new DatabaseError("A table can have only ONE primary key.");
+        }
 
+        // build table
         self::$data[$table] = [];
+        self::$data['%tables'][$table]['%primary_key'] = $primary_key->name;
         foreach ($columns as $column) {
             self::$data[$table][$column->name] = [];
             self::$data['%tables'][$table][$column->name] =
@@ -98,6 +112,7 @@ class FileDatabase extends Database
                     'type' => $column->type,
                     'nullable' => $column->nullable,
                     'timestamp' => $column->timestamp,
+                    'auto_increment' => isset($column::$auto_increment) ? $column::$auto_increment : false
                 ];
         }
         self::dump_data_in_file();

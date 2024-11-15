@@ -43,10 +43,10 @@ class Select extends AbstractStatement
      * if the result is an array, and has just one element, it will return this element (recursivly).
      * @return mixed Success
      */
-    public function get(): mixed
+    public function get(bool $clean = true): mixed
     {
         $this->execute();
-        return Database::get_query_result(true);
+        return Database::get_query_result($clean);
     }
 
     /**

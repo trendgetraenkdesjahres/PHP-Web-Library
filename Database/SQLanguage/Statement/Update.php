@@ -32,7 +32,12 @@ class Update extends AbstractStatement
         $this->set_table($table);
     }
 
-    public function set($column, $value): self
+    public function unset(string $column): self
+    {
+        return $this->set($column, null);
+    }
+
+    public function set(string $column, $value): self
     {
         SyntaxCheck::is_field_name($column);
         SyntaxCheck::is_safe_value($value);

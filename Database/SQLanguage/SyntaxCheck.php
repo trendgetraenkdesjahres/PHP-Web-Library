@@ -10,8 +10,9 @@ class SyntaxCheck
 
     private function __construct() {}
 
-    public static function is_safe_value(string $value)
+    public static function is_safe_value(string|null $value)
     {
+        $value = is_null($value) ? 'NULL' : $value;
         if (preg_match('/[\'";]/', $value)) {
             return self::throw_exception("`$value` is not a safe value.");
         }

@@ -1,6 +1,6 @@
 <?php
 
-namespace PHP_Library\Database\Table;
+namespace PHP_Library\Database\Table\Column;
 
 /**
  * TableColumn represents a table column with its properties.

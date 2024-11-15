@@ -26,6 +26,8 @@ abstract class DataTable
      */
     public string $name;
 
+    abstract public function select_count(): int;
+
     /**
      * Create a DB Statement for this table. To query it on the current DB, call `execute()`.
      * Build Statement with `where()`.

@@ -4,7 +4,7 @@ namespace  PHP_Library\Database;
 
 use PHP_Library\Database\Error\DatabaseError;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
-use PHP_Library\Database\Table\Column;
+use PHP_Library\Database\Table\Column\Column;
 use PHP_Library\Database\Table\DataTable;
 use PHP_Library\Settings\Settings;
 use ReflectionClass;

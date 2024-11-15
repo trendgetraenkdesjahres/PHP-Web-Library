@@ -12,7 +12,7 @@ trait FormatTrait
     protected static function format_message($message, ?int $code = null)
     {
         $code = is_int($code) ? "({$code})" : '';
-        $class_name = (new \ReflectionClass(__CLASS__))->getShortName();
+        $class_name = (new \ReflectionClass(get_called_class()))->getShortName();
         $function_trace = self::get_parent_functions(trace_limit: 3);
         return "{$class_name}{$code} [{$function_trace}]: {$message}";
     }
@@ -34,7 +34,7 @@ trait FormatTrait
         $open_brackets = 0;
         foreach ($trace as $caller) {
             if (isset($caller['type'])) {
-                if ($caller['class'] === get_called_class() || $caller['class'] === get_called_class()) {
+                if (is_subclass_of(get_called_class(), $caller['class']) || get_called_class() === __CLASS__) {
                     continue;
                 }
                 $open_brackets++;

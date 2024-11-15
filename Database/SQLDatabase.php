@@ -6,7 +6,7 @@ use  PHP_Library\Settings\Settings;
 use PDO;
 use PDOStatement;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
-use PHP_Library\Database\Table\Column;
+use PHP_Library\Database\Table\Column\Column;
 use PHP_Library\Database\Table\SQLTable;
 use PHP_Library\Database\Error\DatabaseError;
 

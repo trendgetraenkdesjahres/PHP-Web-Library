@@ -2,4 +2,20 @@
 
 namespace  PHP_Library\Database\Table;
 
-class FileTable extends DataTable {}
+use PHP_Library\Database\FileDatabase;
+
+class FileTable extends DataTable
+{
+    /**
+     * secret row id column name
+     * @var string
+     */
+    static public string $id_column_name = 'rowid';
+
+    public function select_count(): int
+    {
+        return count(
+            FileDatabase::$data[$this->name][array_key_first(FileDatabase::$data[$this->name])]
+        );
+    }
+}

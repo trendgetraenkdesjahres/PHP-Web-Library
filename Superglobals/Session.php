@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Superglobals;
 
+use PHP_Library\Error\Warning;
 use PHP_Library\Superglobals\Error\SessionError;
 
 /**
@@ -25,10 +26,16 @@ class Session
         return true;
     }
 
+    public static function has_field(string $key): bool
+    {
+        static::populate_session_array();
+        return isset($_SESSION[$key]);
+    }
+
     public static function get(string $key): mixed
     {
-        static::initialize();
-        if (!isset($_SESSION[$key])) {
+        if (!static::has_field($key)) {
+            Warning::trigger("Undefined Session Field '{$key}'");
             return null;
         }
         return $_SESSION[$key];
@@ -36,13 +43,20 @@ class Session
 
     public static function set(string $key, mixed $value): void
     {
-        static::initialize();
+        static::populate_session_array();
         $_SESSION[$key] = $value;
     }
 
+    /**
+     * without args, the whole session will be cleared on the server!!
+     * @param null|string $key
+     * @param null|string ...$keys
+     * @return bool
+     * @throws SessionError
+     */
     public static function unset(?string $key = null, ?string ...$keys): bool
     {
-        static::initialize();
+        static::populate_session_array();
         if (is_null($key) && !empty($keys)) {
             throw new SessionError("When unsetting the whole session, just `Session::unset(null)`.");
         }
@@ -76,7 +90,7 @@ class Session
         );
     }
 
-    protected static function initialize(): bool
+    protected static function populate_session_array(): bool
     {
         if (is_null(static::$id)) {
             return static::start();

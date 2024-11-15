@@ -78,6 +78,7 @@ class FileHandle
     public function write_file(mixed $data): FileHandle
     {
         rewind($this->file_handle);
+        ftruncate($this->file_handle, 0);
         if (!fwrite($this->file_handle, serialize($data))) {
             $type = get_resource_type($this->file_handle);
             Warning::trigger("Could not fwrite($type, \$data).");

@@ -2,29 +2,36 @@
 
 namespace PHP_Library\Superglobals;
 
+use PHP_Library\Error\Warning;
 use PHP_Library\Superglobals\Error\CookieError;
 
 class Cookie
 {
     protected static array $cookie_parameters = [];
 
+    public static function has_field(string $key): bool
+    {
+        return isset($_COOKIE[$key]);
+    }
+
     /**
      * returns false if cookie is not set.
      *
-     * @param [type] $name
-     * @return string|array|integer|float|false
+     * @param [type] $key
+     * @return mixed
      */
-    public static function get($name): string|array|int|false
+    public static function get(string $key): mixed
     {
-        if (!isset($_COOKIE[$name])) {
-            return false;
+        if (!static::has_field($key)) {
+            Warning::trigger("Undefined Cookie Field '{$key}'");
+            return null;
         }
-        $value = $_COOKIE[$name];
+        $value = $_COOKIE[$key];
         if (
-            isset(static::$cookie_parameters[$name])
-            && isset(static::$cookie_parameters[$name]['type'])
+            isset(static::$cookie_parameters[$key])
+            && isset(static::$cookie_parameters[$key]['type'])
         ) {
-            $type = static::$cookie_parameters[$name]['type'];
+            $type = static::$cookie_parameters[$key]['type'];
             if ($type === 'array') {
                 return static::decode_str_to_array($value);
             }
