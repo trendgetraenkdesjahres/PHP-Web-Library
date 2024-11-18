@@ -28,6 +28,8 @@ abstract class Database
      */
     abstract protected static function initalize(): bool;
 
+    abstract public static function last_insert_id(): int|false;
+
     /**
      * Get queried data.
      *
@@ -87,6 +89,11 @@ abstract class Database
     public static function get_table(string $name): DataTable
     {
         return self::get_instance()::get_table($name);
+    }
+
+    public static function get_last_insert_id(): int|false
+    {
+        return self::get_instance()::last_insert_id();
     }
 
     /**

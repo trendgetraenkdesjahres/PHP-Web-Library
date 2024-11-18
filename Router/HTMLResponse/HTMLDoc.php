@@ -2,11 +2,15 @@
 
 namespace PHP_Library\Router\HTMLResponse;
 
+use PHP_Library\Error\Error;
 use PHP_Library\Router\Router;
+use PHP_Library\Superglobals\Get;
 
 class HTMLDoc
 {
-    static protected string $template_file  = __DIR__ . '/default_html_template.php';
+    static protected array $template_files = [];
+
+    static protected string $default_template_file = __DIR__ . '/default_html_template.php';
 
     protected static array $overwrite_content = [
         'head' => [],
@@ -18,7 +22,8 @@ class HTMLDoc
         $variable['content'] = $content;
         extract($variable);
         ob_start();
-        include static::$template_file;
+        $template_file = static::get_matching_templatefile();
+        include $template_file;
         $html_doc = ob_get_clean();
         if ($endpoint_title = Router::$current_endpoint->get_title()) {
             static::$overwrite_content['head']['title'] = $endpoint_title;
@@ -38,9 +43,12 @@ class HTMLDoc
      * @param string $path
      * @return void
      */
-    public static function set_template_file(string $path)
+    public static function set_template_file(string $path, string $preg_pattern = '/.*/'): void
     {
-        static::$template_file = $path;
+        array_unshift(static::$template_files, [
+            'preg_pattern' => $preg_pattern,
+            'file' => $path
+        ]);
     }
 
     // only one title elem per html doc
@@ -153,5 +161,22 @@ class HTMLDoc
             $tag .= htmlspecialchars(static::$overwrite_content['head'][$tag_name]) . "</{$tag_name}>";
         }
         return $tag;
+    }
+
+    public static function get_matching_templatefile(): string
+    {
+        if (empty(static::$template_files)) {
+            return static::$default_template_file;
+        }
+        $path = Get::get_path();
+        foreach (static::$template_files as $template_file) {
+            if (false === preg_match($template_file['preg_pattern'], $path, $matches)) {
+                throw new Error("Invalid preg pattern: '{$template_file['preg_pattern']}'");
+            }
+            if ($matches) {
+                return $template_file['file'];
+            }
+        }
+        return static::$default_template_file;
     }
 }

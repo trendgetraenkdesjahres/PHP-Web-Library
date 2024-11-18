@@ -9,13 +9,24 @@ class PHPFile extends Endpoint
 {
     private string $file;
 
+    private array $vars = [];
+
     public array $http_headers = [
         'content-type' => ['text/html', 'charset' => 'utf-8']
     ];
 
+    public function add_variable(string $name, mixed $value): static
+    {
+        $this->vars[$name] = $value;
+        return $this;
+    }
+
     public function get_content(): string
     {
         ob_start();
+        foreach ($this->vars as $var_name => $value) {
+            $$var_name = $value;
+        }
         require $this->file;
         return ob_get_clean();
     }

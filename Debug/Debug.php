@@ -10,7 +10,6 @@ class Debug
     private string $method;
     private string $location;
 
-    private string $expression_is_object;
     private string $expression_type;
     private mixed  $expression_value;
 

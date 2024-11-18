@@ -2,12 +2,18 @@
 
 namespace PHP_Library\Database\Table\Column;
 
+use PHP_Library\Database\Error\DatabaseError;
+use PHP_Library\Database\SQLanguage\Error\SQLanguageError;
+use PHP_Library\Database\SQLanguage\SyntaxCheck;
+
 /**
  * TableColumn represents a table column with its properties.
  */
 class Column
 {
     public string $name;
+    public static bool $auto_increment = false;
+    public static bool $is_primary_key = false;
 
     /**
      * Constructor for TableColumn.
@@ -25,6 +31,10 @@ class Column
         public bool $nullable = false,
         public bool $timestamp = false
     ) {
+        if (! SyntaxCheck::is_field_name($name)) {
+            throw new DatabaseError("{$name} is not a column name.");
+        }
         $this->name = trim($name);
+        // TODO apply sql lang check on type!!
     }
 }

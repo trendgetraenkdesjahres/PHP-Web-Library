@@ -66,7 +66,7 @@ abstract class Endpoint implements Stringable
         if ($text) {
             return new Element('a', ['href' => $this->path], $text);
         }
-        if ($this->title) {
+        if (isset($this->title)) {
             return new Element('a', ['href' => $this->path], $this->title);
         }
         return new Element('a', ['href' => $this->path], '@');

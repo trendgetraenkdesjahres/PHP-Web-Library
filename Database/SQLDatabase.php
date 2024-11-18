@@ -15,7 +15,7 @@ use PHP_Library\Database\Error\DatabaseError;
  */
 class SQLDatabase extends Database
 {
-    private static $pdo;
+    private static PDO $pdo;
     private static PDOStatement $result;
 
     /**
@@ -62,6 +62,11 @@ class SQLDatabase extends Database
         }
         self::$pdo = $pdo;
         return true;
+    }
+
+    public static function last_insert_id(): int|false
+    {
+        return self::$pdo->lastInsertId();
     }
 
     /**

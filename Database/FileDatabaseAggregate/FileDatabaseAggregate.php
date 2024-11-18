@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Database\FileDatabaseAggregate;
 
+use PHP_Library\Database\Database;
 use PHP_Library\Database\Error\DatabaseError;
 use PHP_Library\Database\FileDatabase;
 use PHP_Library\Database\SQLanguage\Statement\Delete;
@@ -51,7 +52,6 @@ trait FileDatabaseAggregate
                 }
             }
         }
-        $sql_statement->values_clause;
         return static::insert_row($table_name, $row_cells);
     }
 
@@ -161,7 +161,7 @@ trait FileDatabaseAggregate
         if ($select_column === "*") {
             $select_columns = array_keys(FileDatabase::$data[$table]);
             // hide the row_id column.
-            $row_id_column = array_search(FileTable::$id_column_name, $select_columns);
+            $row_id_column = array_search(FileTable::$default_id_column_name, $select_columns);
             unset($select_columns[$row_id_column]);
         } else {
             $select_columns = array_merge([$select_column], $select_columns);
@@ -314,8 +314,8 @@ trait FileDatabaseAggregate
         if ($column_name == $primary_key) {
             if (false !== array_search($value, FileDatabase::$data[$table_name][$column_name], true)) {
                 DatabaseError::trigger("$table_name.$column_name (primary key) must be unique.");
+                return false;
             }
-            return false;
         }
         if ($columns_info[$column_name]['auto_increment']) {
             $last_ai_value_key = array_key_last(FileDatabase::$data[$table_name][$column_name]);
@@ -364,26 +364,36 @@ trait FileDatabaseAggregate
         return $set_cells;
     }
 
+    // returns new row_id
     private static function insert_row(string $table_name, array $row_cells): int
     {
         $columns_info = static::get_columns_info($table_name);
-        $set_cells = 0;
+        $new_row_key = static::get_new_insert_row_key($table_name);
         foreach ($columns_info as $column_name => $column_property) {
-            $new_row_id = isset($new_row_id) ? $new_row_id : array_key_last(FileDatabase::$data[$table_name][$column_name]) + 1;
             if ($column_property['auto_increment']) {
-                $current_auto_increment_value = isset(FileDatabase::$data[$table_name][$column_name][$new_row_id - 1]) ? FileDatabase::$data[$table_name][$column_name][$new_row_id - 1] : 0;
-                static::set_cell($table_name, $column_name, $new_row_id, $current_auto_increment_value);
+                static::set_cell($table_name, $column_name, $new_row_key, null);
                 continue;
             }
             if (!isset($row_cells[$column_name]) && !$column_property['nullable']) {
                 DatabaseError::trigger("$table_name.$column_name can not be empty/null");
+                continue;
             }
             $value = $row_cells[$column_name];
             unset($row_cells[$column_name]);
-            static::set_cell($table_name, $column_name, $new_row_id, $value);
-            $set_cells++;
+            static::set_cell($table_name, $column_name, $new_row_key, $value);
         }
-        return $set_cells;
+        return isset($new_row_key) ? $new_row_key + 1 : 1;
+    }
+
+    // 'key' in array start with 0, 'id' in a table row with 1
+    private static function get_new_insert_row_key(string $table_name): int
+    {
+        $first_column = array_key_first(FileDatabase::$data[$table_name]);
+        $highest_current_key = array_key_last(FileDatabase::$data[$table_name][$first_column]);
+        if (is_int($highest_current_key)) {
+            return $highest_current_key + 1;
+        }
+        return 0;
     }
 
     private static function count_nullable_columns(string $table_name): int

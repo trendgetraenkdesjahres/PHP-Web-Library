@@ -7,7 +7,6 @@ use PHP_Library\Database\FileDatabaseAggregate\FileDatabaseAggregate;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
 use PHP_Library\Database\Table\Column\Column;
 use PHP_Library\Database\Table\Column\PrimaryAutoIncrementKey;
-use PHP_Library\Database\Table\Column\PrimaryKey;
 use PHP_Library\Database\Table\FileTable;
 use PHP_Library\Error\Warning;
 use  PHP_Library\Settings\Settings;
@@ -22,6 +21,9 @@ class FileDatabase extends Database
     use FileDatabaseAggregate;
 
     private static FileHandle $file;
+
+    protected static int $last_insert_id;
+
     public static mixed $data = null;
     public static mixed $query_result = [];
 
@@ -69,6 +71,10 @@ class FileDatabase extends Database
         return new FileTable($table_name, false);
     }
 
+    public static function last_insert_id(): int|false
+    {
+        return isset(static::$last_insert_id) ? static::$last_insert_id : false;
+    }
     /**
      * Create a table with the given name and columns.
      *
@@ -89,12 +95,12 @@ class FileDatabase extends Database
         // check primary Key: there has be exactly one and in first place
         $primary_key_columns = [];
         foreach ($columns as $i => $column) {
-            if (isset($column->is_primary_key)) {
+            if ($column::$is_primary_key) {
                 $primary_key_columns[] = $i;
             }
         }
         if (empty($primary_key_columns)) {
-            $primary_key = new PrimaryAutoIncrementKey(FileTable::$id_column_name);
+            $primary_key = new PrimaryAutoIncrementKey(FileTable::$default_id_column_name);
             array_unshift($columns, $primary_key);
         } else if (count($primary_key_columns) === 1) {
             $primary_key = $columns[$primary_key_columns[0]];
@@ -170,7 +176,13 @@ class FileDatabase extends Database
             case 'INSERT':
                 static::$data = static::$file->open_file('r+')
                     ->get_memory();
-                static::$query_result = static::execute_insert($sql_statement);
+                $last_insert_id = static::execute_insert($sql_statement);
+                if (! $last_insert_id) {
+                    static::$query_result = false;
+                } else {
+                    static::$query_result = true;
+                    static::$last_insert_id = $last_insert_id;
+                }
                 static::$file->write_file(static::$data)
                     ->close_file();
                 break;

@@ -20,7 +20,11 @@ class Router
     public static function add_endpoint(Endpoint &$endpoint)
     {
         self::init_singleton();
-        self::$endpoints[strtoupper($endpoint->http_method)][$endpoint->path] = $endpoint;
+        $method = strtoupper($endpoint->http_method);
+        if (isset(self::$endpoints[$method][$endpoint->path])) {
+            throw new RouterError("Endpoint {$method} '{$endpoint}' is already set.");
+        }
+        self::$endpoints[$method][$endpoint->path] = $endpoint;
     }
 
     public static function add_html_template(string $path, string $regex = ".*")
