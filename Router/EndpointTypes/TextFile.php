@@ -20,9 +20,7 @@ class TextFile extends Endpoint
 
     protected function constructor(mixed $file): static
     {
-        if (strpos($file, '/') !== 0) {
-            $file = Server::get_document_root() . '/' . $file;
-        }
+        $file =  static::get_abs_path($file);
         $this->file = $file;
         return $this;
     }

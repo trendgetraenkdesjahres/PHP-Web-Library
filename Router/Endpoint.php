@@ -87,4 +87,12 @@ abstract class Endpoint implements Stringable
     {
         return $this->path;
     }
+
+    protected static function get_abs_path(string $path): string
+    {
+        if (! str_starts_with('/', $path)) {
+            return $_SERVER['DOCUMENT_ROOT'] . "/{$path}";
+        }
+        return $path;
+    }
 }

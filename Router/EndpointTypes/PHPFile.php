@@ -33,6 +33,7 @@ class PHPFile extends Endpoint
 
     protected function constructor(mixed $file): static
     {
+        $file =  static::get_abs_path($file);
         if (!is_file($file)) {
             throw new Error("\$file is not a file");
         }
