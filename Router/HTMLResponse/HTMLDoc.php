@@ -45,6 +45,10 @@ class HTMLDoc
      */
     public static function set_template_file(string $path, string $preg_pattern = '/.*/'): void
     {
+        if (!str_starts_with($path, '/')) {
+            $path = $_SERVER['DOCUMENT_ROOT'] . "/{$path}";
+        }
+
         array_unshift(static::$template_files, [
             'preg_pattern' => $preg_pattern,
             'file' => $path
