@@ -70,10 +70,10 @@ class MarkdownParser
         }
 
         // things that appear somewhere in a line
-        $html = preg_replace('/(\*\*\*(.*)\*\*\*)/', '<b>$2</b>', $html);
-        $html = preg_replace('/(\*(.*)\*)/', '<i>$2</i>', $html);
-        $html = preg_replace('/(`(.*)`)/', '<code>$2</code>', $html);
-        $html = preg_replace('/\[(.*)\]\((.*)\)/', '<a href="$2">$1</a>', $html);
+        $html = preg_replace('/(\*\*\*(.*?)\*\*\*)/', '<b>$2</b>', $html);
+        $html = preg_replace('/(\*(.*?)\*)/', '<i>$2</i>', $html);
+        $html = preg_replace('/(`(.*?)`)/', '<code>$2</code>', $html);
+        $html = preg_replace('/\[(.*?)\]\((.*)\)/', '<a href="$2">$1</a>', $html);
         return $html;
     }
 }
