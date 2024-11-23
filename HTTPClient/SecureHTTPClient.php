@@ -1,10 +1,10 @@
 <?php
 
-namespace PHP_Library\APIClients;
+namespace PHP_Library\HTTPClient;
 
 use PHP_Library\Settings\Settings;
 
-class SecureAPIClient extends APIClient
+class SecureHTTPClient extends HTTPClient
 {
     public string $cookie_file;
 
@@ -22,7 +22,7 @@ class SecureAPIClient extends APIClient
 
     private function get_token(string $user, string $secret, string $token_url)
     {
-        $client = new APIClient();
+        $client = new HTTPClient();
         $response = $client->http_post(
             post_fields: ['grant_type=client_credentials'],
             http_headers: [

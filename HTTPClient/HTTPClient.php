@@ -1,13 +1,13 @@
 <?php
 
-namespace PHP_Library\APIClients;
+namespace PHP_Library\HTTPClient;
 
 use \CurlHandle;
 use PHP_Library\Error\Error;
 use PHP_Library\Error\Warning;
 use PHP_Library\Error\Notice;
 
-class APIClient
+class HTTPClient
 {
 
     /**
@@ -46,9 +46,9 @@ class APIClient
      * @param string $target The target URL or endpoint.
      * @param false|array $query_parameters [optional] An array of query parameters.
      *
-     * @return APIClient Returns the current instance of the API client.
+     * @return HTTPClient Returns the current instance of the API client.
      */
-    public function set_target_url(string $target = '', ?array $query_parameters = null): APIClient
+    public function set_target_url(string $target = '', ?array $query_parameters = null): HTTPClient
     {
         if (is_int(strpos($target, '://'))) {
             $this->target_url = $target . ($query_parameters ? '?' . http_build_query(data: $query_parameters) : '');
@@ -69,9 +69,9 @@ class APIClient
      * @param array $curl_options [optional] Additional cURL options.
      * @param false|string $target_url [optional] The target URL for the request.
      *
-     * @return APIClient Returns the current instance of the API client.
+     * @return HTTPClient Returns the current instance of the API client.
      */
-    public function http_get(array $http_headers = [], array $curl_options = [], false|string $target_url = false): APIClient
+    public function http_get(array $http_headers = [], array $curl_options = [], false|string $target_url = false): HTTPClient
     {
         if (!$target_url) {
             if (!$this->target_url) {
@@ -102,9 +102,9 @@ class APIClient
      * @param array $curl_options [optional] Additional cURL options.
      * @param false|string $target_url [optional] The target URL for the request.
      *
-     * @return APIClient Returns the current instance of the API client.
+     * @return HTTPClient Returns the current instance of the API client.
      */
-    public function http_post(?array $post_fields = null, array $http_headers = [], array $curl_options = [], false|string $target_url = false): APIClient
+    public function http_post(?array $post_fields = null, array $http_headers = [], array $curl_options = [], false|string $target_url = false): HTTPClient
     {
         if (!$target_url) {
             if (!$this->target_url) {
@@ -300,9 +300,9 @@ class APIClient
      *
      * @param callable $callable_filter The callback function for filtering.
      *
-     * @return APIClient Returns the current instance of the API client.
+     * @return HTTPClient Returns the current instance of the API client.
      */
-    public function add_result_body_filter(callable $callable_filter): APIClient
+    public function add_result_body_filter(callable $callable_filter): HTTPClient
     {
         if (is_callable($callable_filter)) {
             array_push($this->result_body_filters, $callable_filter);
@@ -317,9 +317,9 @@ class APIClient
      *
      * @param callable $callable_filter The callback function for filtering.
      *
-     * @return APIClient Returns the current instance of the API client.
+     * @return HTTPClient Returns the current instance of the API client.
      */
-    public function add_result_array_filter(callable $callable_filter): APIClient
+    public function add_result_array_filter(callable $callable_filter): HTTPClient
     {
         if (is_callable($callable_filter)) {
             array_push($this->result_array_filters, $callable_filter);
