@@ -7,16 +7,19 @@ use PHP_Library\Database\SQLanguage\Error\SQLanguageError;
 /**
  * Class Insert
  *
- * Represents a INSETRT statement.
- * Build Statement with `values()`.
+ * Represents an SQL INSERT statement.
+ * Allows building the statement using the `values()` method provided by `ValuesClauseTrait`.
+ * Depends on `SQLanguageError` for error handling.
  */
 class Insert extends AbstractStatement
 {
     use Clause\ValuesClauseTrait;
+
     /**
+     * Constructs a new Insert statement.
      *
-     * Constructs a Insert statement.
-     * @param string $table The name of the table.
+     * @param string $table The name of the table where data will be inserted.
+     * @param string ...$columns Optional column names to include in the INSERT statement.
      */
     public function __construct(string $table, string ...$columns)
     {
@@ -27,8 +30,11 @@ class Insert extends AbstractStatement
     }
 
     /**
-     * @return string
-     * @throws \Error If the VALUES clause is not completed.
+     * Converts the Insert statement to its SQL string representation.
+     *
+     * @return string The SQL INSERT statement as a string.
+     *
+     * @throws SQLanguageError If the VALUES clause is incomplete.
      */
     public function __toString(): string
     {

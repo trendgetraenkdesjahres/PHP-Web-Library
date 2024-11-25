@@ -6,30 +6,37 @@ use PHP_Library\Database\SQLanguage\Error\SQLanguageError;
 use PHP_Library\Database\SQLanguage\SyntaxCheck;
 
 /**
- * Values WhereClauseTrait
+ * Trait ValuesClauseTrait
  *
- * Provides methods for constructing SQL VALUE clauses dynamically.
+ * Provides methods for constructing and managing SQL VALUES clauses dynamically.
+ * Handles appending values, validating inputs, and generating the final VALUES clause string.
  */
 trait ValuesClauseTrait
 {
     /**
-     * The constructed VALUES clause
-     * @var string
-     **/
+     * @var string The constructed VALUES clause as a string.
+     */
     public string $values_clause = '';
 
     /**
-     * The list of single VALUES
-     * @var array
-     **/
+     * @var array The list of individual values to be included in the VALUES clause.
+     */
     public array $values = [];
 
     /**
-     * Flag indicating if the VALUES clause has been completed
-     * @var bool
-     **/
+     * @var bool Flag indicating whether the VALUES clause is finalized.
+     */
     private bool $values_clause_completed = false;
 
+    /**
+     * Adds values to the VALUES clause and marks it as completed.
+     *
+     * @param string|int|float ...$value A list of values to include in the clause. Strings are quoted automatically.
+     * @return self The current instance for method chaining.
+     *
+     * @throws SQLanguageError If values are appended after the VALUES clause is marked as complete.
+     * @throws \InvalidArgumentException If any value is invalid.
+     */
     public function values(string|int|float ...$value): self
     {
         if ($this->values_clause_completed) {
@@ -49,10 +56,11 @@ trait ValuesClauseTrait
     }
 
     /**
-     * Gets the constructed VALUES clause.
+     * Retrieves the constructed VALUES clause.
      *
-     * @return string The constructed VALUES clause.
-     * @throws SQLanguageError If the VALUES clause is incomplete.
+     * @return string The finalized VALUES clause as a string.
+     *
+     * @throws SQLanguageError If the VALUES clause has not been completed.
      */
     protected function get_values_clause(): string
     {

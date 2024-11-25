@@ -9,37 +9,33 @@ use PHP_Library\Database\SQLanguage\SyntaxCheck;
 /**
  * Trait WhereClauseTrait
  *
- * Provides methods for constructing SQL WHERE clauses dynamically.
- * It allows building WHERE clauses for SELECT, UPDATE, DELETE, and other SQL statements.
+ * Provides methods for dynamically constructing SQL WHERE clauses.
+ * Used in various SQL statements such as SELECT, UPDATE, and DELETE.
  */
 trait WhereClauseTrait
 {
     /**
-     * Constructs an array of where clause objects.
-     * The keys are "WHERE", "AND_1", "AND_2", "OR_3" ...
-     *
-     * @var array
+     * @var WhereClauseCondition[]  An array of WHERE clause objects, indexed by keys like "WHERE", "AND_1", "OR_2", etc.
      */
     public array $where_objs = [];
 
+
     /**
-     * The constructed WHERE clause
-     * @var string
-     **/
+     * @var string The constructed WHERE clause as a string.
+     */
     private string $where_clause = 'WHERE ';
 
     /**
-     * Flag indicating if the WHERE clause has been completed
-     * @var bool
-     **/
+     * @var bool Flag indicating whether the WHERE clause is completed.
+     */
     private bool $where_clause_completed = true;
 
     /**
-     * Constructs a WHERE clause for equality.
+     * Constructs a WHERE clause for equality comparison.
      *
-     * @param string $column The column name for equality comparison
-     * @param string|int $value The value to compare for equality
-     * @return $this
+     * @param string $column The column name.
+     * @param string|int $value The value to compare.
+     * @return static
      */
     public function where_equals(string $column, string|int $value): static
     {
@@ -51,11 +47,11 @@ trait WhereClauseTrait
     }
 
     /**
-     * Constructs a WHERE clause for not equal comparison.
+     * Constructs a WHERE clause for inequality comparison.
      *
-     * @param string $column The column name for not equal comparison
-     * @param string|int $value The value to compare for not equal
-     * @return $this
+     * @param string $column The column name.
+     * @param string|int $value The value to compare.
+     * @return static
      */
     public function where_not_equals(string $column, string|int $value): static
     {
@@ -67,11 +63,11 @@ trait WhereClauseTrait
     }
 
     /**
-     * Constructs a WHERE clause for greater than comparison.
+     * Constructs a WHERE clause for greater-than comparison.
      *
-     * @param string $column The column name for greater than comparison
-     * @param string|int $value The value to compare for greater than
-     * @return $this
+     * @param string $column The column name.
+     * @param string|int $value The value to compare.
+     * @return static
      */
     public function where_greater_than(string $column, string|int $value): static
     {
@@ -83,11 +79,11 @@ trait WhereClauseTrait
     }
 
     /**
-     * Constructs a WHERE clause for greater than or equal comparison.
+     * Constructs a WHERE clause for greater-than-or-equal comparison.
      *
-     * @param string $column The column name for greater than or equal comparison
-     * @param string|int $value The value to compare for greater than or equal
-     * @return $this
+     * @param string $column The column name.
+     * @param string|int $value The value to compare.
+     * @return static
      */
     public function where_greater_or_equal(string $column, string|int $value): static
     {
@@ -99,11 +95,11 @@ trait WhereClauseTrait
     }
 
     /**
-     * Constructs a WHERE clause for less than comparison.
+     * Constructs a WHERE clause for less-than comparison.
      *
-     * @param string $column The column name for less than comparison
-     * @param string|int $value The value to compare for less than
-     * @return $this
+     * @param string $column The column name.
+     * @param string|int $value The value to compare.
+     * @return static
      */
     public function where_less_than(string $column, string|int $value): static
     {
@@ -119,7 +115,7 @@ trait WhereClauseTrait
      *
      * @param string $column The column name for less than or equal comparison
      * @param string|int $value The value to compare for less than or equal
-     * @return $this
+     * @return static
      */
     public function where_less_than_or_equal(string $column, string|int $value): static
     {
@@ -136,7 +132,7 @@ trait WhereClauseTrait
      * @param string $column The column name for BETWEEN comparison
      * @param string|int $value1 The starting value for BETWEEN comparison
      * @param string|int $value2 The ending value for BETWEEN comparison
-     * @return $this
+     * @return static
      */
     public function where_between(string $column, string|int $value1, string|int $value2): static
     {
@@ -153,7 +149,7 @@ trait WhereClauseTrait
      *
      * @param string $column The column name for LIKE comparison
      * @param string|int $value The value to compare for LIKE
-     * @return $this
+     * @return static
      */
     public function where_like(string $column, string|int $value): static
     {
@@ -169,7 +165,7 @@ trait WhereClauseTrait
      *
      * @param string $column The column name for IN comparison
      * @param string|int ...$values The values for IN comparison
-     * @return $this
+     * @return static
      */
     public function where_in(string $column, string|int ...$values): static
     {
@@ -187,10 +183,9 @@ trait WhereClauseTrait
 
     /**
      * Appends the logical OR operator to the WHERE clause.
-     * Throws an error if the WHERE clause is empty or incomplete.
      *
-     * @return $this
-     * @throws SQLanguageError If the WHERE clause is empty or incomplete
+     * @return static
+     * @throws SQLanguageError If the WHERE clause is empty or incomplete.
      */
     public function or(): static
     {
@@ -205,10 +200,9 @@ trait WhereClauseTrait
 
     /**
      * Appends the logical AND operator to the WHERE clause.
-     * Throws an error if the WHERE clause is empty or incomplete.
      *
-     * @return $this
-     * @throws SQLanguageError If the WHERE clause is empty or incomplete
+     * @return static
+     * @throws SQLanguageError If the WHERE clause is empty or incomplete.
      */
     public function and(): static
     {
@@ -222,9 +216,9 @@ trait WhereClauseTrait
     }
 
     /**
-     * Gets the constructed WHERE clause.
+     * Retrieves the constructed WHERE clause.
      *
-     * @return string The constructed WHERE clause.
+     * @return string The WHERE clause as a string.
      * @throws SQLanguageError If the WHERE clause is incomplete.
      */
     public function get_where_clause(): string
@@ -239,11 +233,10 @@ trait WhereClauseTrait
     }
 
     /**
-     * Constructs an array of where clause objects.
-     * The keys are "WHERE", "AND_1", "AND_2", "OR_3" ...
+     * Retrieves the array of WHERE clause objects.
      *
-     * @return WhereClauseCondition[] WHERE Objects.
-     * @throws SQLanguageError If the WHERE Objects emtpy.
+     * @return WhereClauseCondition[] The array of WHERE clause objects.
+     * @throws SQLanguageError If the WHERE clause objects are empty.
      */
     public function get_where_objs(): array
     {
@@ -254,13 +247,12 @@ trait WhereClauseTrait
     }
 
     /**
-     * Validates the input values for constructing the WHERE clause.
-     * Throws an error if the WHERE clause is already set or if the input values are improper for SQL.
+     * Validates the inputs for constructing a WHERE clause.
      *
-     * @param string $column The column name for the WHERE clause
-     * @param string|int ...$values The values for the WHERE clause
-     * @return $this
-     * @throws SQLanguageError If the WHERE clause is already completed
+     * @param string $column The column name.
+     * @param string|int ...$values The values to validate.
+     * @return static
+     * @throws SQLanguageError If the WHERE clause is already completed or if validation fails.
      */
     private function validate_where_values(string $column, string|int ...$values): static
     {
@@ -275,12 +267,11 @@ trait WhereClauseTrait
     }
 
     /**
-     * Appends the provided string to the WHERE clause.
-     * Updates the $where_clause_completed flag accordingly.
+     * Appends a string to the WHERE clause.
      *
-     * @param string $string The string to append to the WHERE clause
-     * @param bool $clause_is_complete Flag indicating if the WHERE clause is complete after appending the string
-     * @return $this
+     * @param string $string The string to append.
+     * @param bool $clause_is_complete Indicates if the clause is complete after appending.
+     * @return static
      */
     private function append_where_clause(string $string, bool $clause_is_complete = true): static
     {
@@ -290,9 +281,13 @@ trait WhereClauseTrait
     }
 
     /**
-     * Helper for FileDatabase queries...
-     * The keys are "WHERE", "AND_1", "AND_2", "OR_3" ...
-     * @return  static
+     * Adds a WHERE clause object for FileDatabase queries.
+     *
+     * @param string $lhs The left-hand side of the condition.
+     * @param string $operator The comparison operator.
+     * @param mixed $rhs The right-hand side value.
+     * @param mixed|null $rhs2 An optional second value for BETWEEN clauses.
+     * @return static
      */
     private function add_where_clause_obj(string $lhs, string $operator, mixed $rhs, mixed $rhs2 = null): static
     {

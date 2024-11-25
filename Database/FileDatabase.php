@@ -11,30 +11,51 @@ use PHP_Library\Database\Table\FileTable;
 use PHP_Library\Error\Warning;
 use  PHP_Library\Settings\Settings;
 use  PHP_Library\System\FileHandle;
-use ReflectionClass;
 
 /**
- * FileStorage is a class that handles data storage using files.
+ * Handles data storage and operations for file-based databases.
+ * Provides methods for initializing, querying, creating tables, and performing CRUD operations.
+ * Dependent on `FileHandle` for file interactions, and `FileDatabaseAggregate` for additional functionality.
  */
 class FileDatabase extends Database
 {
     use FileDatabaseAggregate;
 
-    private static FileHandle $file;
-
-    protected static int $last_insert_id;
-
+    /**
+     * Stores the data from the file.
+     * @var mixed
+     */
     public static mixed $data = null;
+
+    /**
+     * Stores the result of the last query.
+     * @var mixed[]
+     */
     public static mixed $query_result = [];
 
+    /**
+     * Last inserted ID.
+     * @var int
+     */
+    protected static int $last_insert_id;
+
+    /**
+     * File handle instance used for file operations.
+     * @var FileHandle
+     */
+    private static FileHandle $file;
+
+    /**
+     * Destructor to close the file when the object is destroyed.
+     */
     public function __destruct()
     {
         self::$file->close_file();
     }
 
     /**
-     * Initialize the file storage.
-     *
+     * Initialize the file storage system.
+     * Registers the file path setting and opens the file for reading and writing.
      * @return bool Returns true if initialization is successful, false otherwise.
      */
     public static function initalize(): bool
@@ -62,7 +83,6 @@ class FileDatabase extends Database
 
     /**
      * Get a table instance by name.
-     *
      * @param string $table_name The name of the table.
      * @return FileTable The table instance.
      */
@@ -71,15 +91,20 @@ class FileDatabase extends Database
         return new FileTable($table_name, false);
     }
 
+    /**
+     * Get the last inserted ID.
+     * @return int|false The last inserted ID, or false if not available.
+     */
     public static function last_insert_id(): int|false
     {
         return isset(static::$last_insert_id) ? static::$last_insert_id : false;
     }
+
     /**
-     * Create a table with the given name and columns.
-     *
+     * Create a new table with the given name and columns.
+     * If a table with the same name exists, a warning is triggered.
      * @param string $table The name of the table.
-     * @param Column ...$columns The columns to create.
+     * @param Column ...$columns The columns to create in the table.
      * @return bool Returns true if the table is created, false if it already exists.
      */
     public static function create_table(string $table, Column ...$columns): bool
@@ -127,9 +152,10 @@ class FileDatabase extends Database
 
     /**
      * Check if a table exists.
-     *
-     * @param string $table The table name.
-     * @return bool Returns true if the element exists, false otherwise.
+     * @param string $table The name of the table.
+     * @param string|null $throwable Optional exception class to throw if the table does not exist.
+     * @return bool Returns true if the table exists, false otherwise.
+     * @throws Throwable If the table does not exist and a throwable is provided.
      */
     public static function table_exists(string $table, ?string $throwable = null): bool
     {
@@ -150,7 +176,7 @@ class FileDatabase extends Database
 
     /**
      * Get the queried data.
-     *
+     * @param bool $clean_array If true, flattens arrays with a single element.
      * @return mixed The queried data.
      */
     protected static function get_queried_data(bool $clean_array = false): mixed
@@ -161,9 +187,14 @@ class FileDatabase extends Database
         return self::$query_result;
     }
 
+    /**
+     * Execute the given SQL statement (INSERT, UPDATE, DELETE, SELECT).
+     * @param AbstractStatement $sql_statement The SQL statement to execute.
+     * @return bool Returns true on success, false on failure.
+     */
     protected static function execute_query(AbstractStatement $sql_statement): bool
     {
-        $command = strtoupper((new ReflectionClass($sql_statement))->getShortName());
+        $command = strtoupper((new \ReflectionClass($sql_statement))->getShortName());
         switch ($command) {
             case 'DELETE':
                 static::$data = static::$file->open_file('r+')
@@ -208,6 +239,10 @@ class FileDatabase extends Database
         return (bool) static::$query_result;
     }
 
+    /**
+     * Get the file handle for the current file storage.
+     * @return FileHandle The file handle instance.
+     */
     private static function get_file(): FileHandle
     {
         if (!isset(self::$file)) {
@@ -216,6 +251,10 @@ class FileDatabase extends Database
         return self::$file;
     }
 
+    /**
+     * Dump the current data into the file.
+     * @return void
+     */
     private static function dump_data_in_file(): void
     {
         self::get_file()

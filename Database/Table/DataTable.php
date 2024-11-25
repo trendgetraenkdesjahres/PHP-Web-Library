@@ -10,41 +10,55 @@ use PHP_Library\Database\SQLanguage\Statement\Select;
 use PHP_Library\Database\SQLanguage\Statement\Update;
 use PHP_Library\Settings\Settings;
 
+/**
+ * Abstract class representing a database table.
+ * Provides methods for CRUD operations and SQL statement generation.
+ *
+ * This class depends on:
+ * - PHP_Library\Database\Database for executing queries.
+ * - PHP_Library\Database\SQLanguage\Statement classes for SQL operations.
+ * - PHP_Library\Settings\Settings for configuration.
+ */
 abstract class DataTable
 {
     /**
-     * Holds the initialized table instance implementation. It can not be this abstract class DataTable, that will not work.
+     * Holds the initialized table instance.
+     * Must be an implementation of DataTable, not the abstract class itself.
      *
      * @var DataTable|null
      */
     private static ?DataTable $instance = null;
 
     /**
-     * The name of this table.
+     * The name of the database table.
      *
      * @var string
      */
     public string $name;
 
+    /**
+     * Returns the count of rows in the table.
+     *
+     * @return int Number of rows in the table.
+     */
     abstract public function select_count(): int;
 
     /**
-     * Create a DB Statement for this table. To query it on the current DB, call `execute()`.
-     * Build Statement with `where()`.
+     * Creates a DELETE SQL statement for this table.
+     * Execute the query using `execute()` and build conditions with `where()`.
      *
-     * @return Delete Statement
-     **/
+     * @return Delete SQL DELETE statement for the table.
+     */
     public function delete(): Delete
     {
         return new Delete($this->name);
     }
 
     /**
-     * Delete a row of the table directly (will be executed directly).
-     * Values need to be in order of the columns.
+     * Deletes a row in the table by its ID.
      *
-     * @param int $id The ID of the row.
-     * @return bool Success.
+     * @param int $id The ID of the row to delete.
+     * @return bool Whether the deletion was successful.
      */
     public function delete_row(int $id): bool
     {
@@ -56,22 +70,22 @@ abstract class DataTable
     }
 
     /**
-     * Create a DB Statement for this table. To query it on the current DB, call `execute()`.
-     * Build Statement with `values()`.
+     * Creates an INSERT SQL statement for this table.
+     * Execute the query using `execute()` and add values with `values()`.
      *
-     * @return Insert Statement
-     **/
+     * @param string ...$columns The column names for the insert.
+     * @return Insert SQL INSERT statement for the table.
+     */
     public function insert(string ...$columns): Insert
     {
         return new Insert($this->name, ...$columns);
     }
 
     /**
-     * Inserts a new row into the table directly (will be executed directly).
-     * Values need to be in order of the columns.
+     * Inserts a new row into the table.
      *
-     * @param string|int|float $values Values in the order of the columns.
-     * @return int Count of inserted cells.
+     * @param string|int|float ...$values Values to insert, in column order.
+     * @return int Number of affected rows.
      */
     public function insert_row(string|int|float ...$values): int
     {
@@ -83,10 +97,10 @@ abstract class DataTable
     }
 
     /**
-     * Alias for `insert_row()`
+     * Alias for `insert_row()`.
      *
-     * @param string|int|float $values Values in the order of the columns.
-     * @return int Count of inserted cells.
+     * @param string|int|float ...$values Values to insert, in column order.
+     * @return int Number of affected rows.
      */
     public function add_row(string|int|float ...$values): int
     {
@@ -94,21 +108,23 @@ abstract class DataTable
     }
 
     /**
-     * Create a DB Statement for this table. To query it on the current DB, call `execute()`.
-     * Build Statement with `where()`.
+     * Creates a SELECT SQL statement for this table.
+     * Execute the query using `execute()` or `get()` and add conditions with `where()`.
      *
-     * @return Select Statement
-     **/
+     * @param string $column The main column to select.
+     * @param string ...$more_columns Additional columns to select.
+     * @return Select SQL SELECT statement for the table.
+     */
     public function select(string $column = '*', string ...$more_columns): Select
     {
         return new Select($this->name, $column, ...$more_columns);
     }
 
     /**
-     * Select and get a row from the table by its ID directly (will be executed directly).
+     * Selects a row from the table by its ID.
      *
-     * @param int $id The ID of the row.
-     * @return array The row data.
+     * @param int $id The ID of the row to select.
+     * @return array Associative array representing the row data.
      */
     public function select_row(int $id): array
     {
@@ -120,10 +136,10 @@ abstract class DataTable
     }
 
     /**
-     * Alias for `select_row()`
+     * Alias for `select_row()`.
      *
-     * @param int $id The ID of the row.
-     * @return array The row data.
+     * @param int $id The ID of the row to select.
+     * @return array Associative array representing the row data.
      */
     public function get_row(int $id): array
     {
@@ -131,11 +147,11 @@ abstract class DataTable
     }
 
     /**
-     * Create a DB Statement for this table. To query it on the current DB, call `execute()`.
-     * Build Statement with `where()` and `set()`.
+     * Creates an UPDATE SQL statement for this table.
+     * Execute the query using `execute()` and set conditions with `where()` and `set()`.
      *
-     * @return Update Statement
-     **/
+     * @return Update SQL UPDATE statement for the table.
+     */
     public function update(): Update
     {
         return new Update($this->name);
@@ -159,15 +175,21 @@ abstract class DataTable
         return Database::get_query_result();
     }
 
+
+    /**
+     * Constructor to initialize the table with its name.
+     *
+     * @param string $name The name of the database table.
+     */
     final public function __construct(string $name)
     {
         $this->name = $name;
     }
 
     /**
-     * Get the name of the table.
+     * Retrieves the name of the table.
      *
-     * @return string The name.
+     * @return string The table name.
      */
     public function get_name(): string
     {
@@ -175,10 +197,11 @@ abstract class DataTable
     }
 
     /**
-     * Factory method to get or initialize the appropriate storage instance.
+     * Factory method to get or initialize the appropriate table instance.
      *
-     * @return static The initialized storage instance.
-     * @throws \Error If no suitable configuration for Filebased or DBbased setting is found.
+     * @param string $name The name of the table.
+     * @return static The initialized table instance.
+     * @throws DatabaseError If no configuration for File-based or DB-based storage is found.
      */
     protected static function get_instance(string $name): static
     {

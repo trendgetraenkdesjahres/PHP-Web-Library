@@ -2,7 +2,6 @@
 
 namespace PHP_Library\Database\FileDatabaseAggregate;
 
-use PHP_Library\Database\Database;
 use PHP_Library\Database\Error\DatabaseError;
 use PHP_Library\Database\FileDatabase;
 use PHP_Library\Database\SQLanguage\Statement\Delete;
@@ -11,8 +10,18 @@ use PHP_Library\Database\SQLanguage\Statement\Select;
 use PHP_Library\Database\SQLanguage\Statement\Update;
 use PHP_Library\Database\Table\FileTable;
 
+
+/**
+ * Trait providing functionality for executing SQL-like operations (INSERT, SELECT, UPDATE, DELETE) on a file-based database.
+ * Depends on various classes from the `PHP_Library\Database` and `PHP_Library\Database\SQLanguage\Statement` namespaces.
+ */
 trait FileDatabaseAggregate
 {
+    /**
+     * Executes a DELETE SQL statement on the file-based database.
+     * @param Delete $sql_statement The DELETE statement.
+     * @return int The number of rows deleted.
+     */
     protected static function execute_delete(Delete $sql_statement): int
     {
         $row_ids = self::get_row_ids_from_where_clause($sql_statement);
@@ -28,6 +37,11 @@ trait FileDatabaseAggregate
         return $deleted_rows;
     }
 
+    /**
+     * Executes an INSERT SQL statement on the file-based database.
+     * @param Insert $sql_statement The INSERT statement.
+     * @return int The row ID of the inserted record.
+     */
     protected static function execute_insert(Insert $sql_statement): int
     {
         $table_name = $sql_statement->table;
@@ -55,6 +69,11 @@ trait FileDatabaseAggregate
         return static::insert_row($table_name, $row_cells);
     }
 
+    /**
+     * Executes a SELECT SQL statement on the file-based database.
+     * @param Select $sql_statement The SELECT statement.
+     * @return array The selected rows.
+     */
     protected static function execute_select(Select $sql_statement): array
     {
         $table_name = $sql_statement->table;
@@ -77,6 +96,11 @@ trait FileDatabaseAggregate
         return $rows;
     }
 
+    /**
+     * Executes an UPDATE SQL statement on the file-based database.
+     * @param Update $sql_statement The UPDATE statement.
+     * @return int The number of rows updated.
+     */
     protected static function execute_update(Update $sql_statement): int
     {
         $table_name = $sql_statement->table;
@@ -92,10 +116,9 @@ trait FileDatabaseAggregate
     }
 
     /**
-     * Get the row-IDs where the 'WHERE-Clause' matches
-     *
-     * @param Select $sql_statement Statement with WHERE clause
-     * @return array the IDs
+     * Retrieves row IDs based on a WHERE clause in a SQL statement.
+     * @param Select|Delete|Update $sql_statement The SQL statement with the WHERE clause.
+     * @return array The matching row IDs.
      */
     private static function get_row_ids_from_where_clause(Select|Delete|Update $sql_statement): array
     {
@@ -148,6 +171,12 @@ trait FileDatabaseAggregate
         return $row_ids;
     }
 
+    /**
+     * Operates on multiple arrays based on the given logical operator.
+     * @param string $operator The logical operator (e.g., 'AND', 'OR').
+     * @param array ...$arrays The arrays to operate on.
+     * @return array The result of the operation.
+     */
     private static function operate_row_array(string $operator, ...$arrays)
     {
         if (str_starts_with($operator, 'AND')) {
@@ -156,6 +185,14 @@ trait FileDatabaseAggregate
         return array_merge(...$arrays);
     }
 
+    /**
+     * Retrieves a specific row from the file-based database.
+     * @param string $table The table name.
+     * @param int $row_id The row ID.
+     * @param string $select_column The column to select (default is "*").
+     * @param string ...$select_columns Additional columns to select.
+     * @return array The selected row.
+     */
     private static function get_row(string $table, int $row_id, string $select_column = "*", string ...$select_columns): array
     {
         if ($select_column === "*") {
@@ -178,6 +215,13 @@ trait FileDatabaseAggregate
         return $row;
     }
 
+    /**
+     * Retrieves row IDs where a column equals a specific value.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The value to match.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_equals(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -189,6 +233,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column does not equal a specific value.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The value to avoid.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_not_equals(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -200,6 +251,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column is greater than a specific value.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The value to compare.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_greater_than(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -211,6 +269,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column is greater than or equal to a specific value.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The value to compare.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_greater_or_equal(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -222,6 +287,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column is less than a specific value.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The value to compare.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_less_than(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -233,6 +305,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column is less than or equal to a specific value.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The value to compare.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_less_than_or_equal(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -244,6 +323,14 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column value is between two values.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param int|float $lower The lower bound.
+     * @param int|float $higher The upper bound.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_between(string $table, string $column, int|float $lower, int|float $higher): array
     {
         $ids = [];
@@ -255,6 +342,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column value matches a pattern.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param mixed $value The pattern to match.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_like(string $table, string $column, mixed $value): array
     {
         $ids = [];
@@ -270,6 +364,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column value is in a given set of values.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param array $values The set of values.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_in(string $table, string $column, array $values): array
     {
         $ids = [];
@@ -281,6 +382,13 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves row IDs where a column value is not in a given set of values.
+     * @param string $table The table name.
+     * @param string $column The column name.
+     * @param array $values The set of values.
+     * @return array The matching row IDs.
+     */
     private static function get_ids_where_not_in(string $table, string $column, array $values): array
     {
         $ids = [];
@@ -292,6 +400,11 @@ trait FileDatabaseAggregate
         return $ids;
     }
 
+    /**
+     * Retrieves column information for a specific table.
+     * @param string $table_name The table name.
+     * @return array The column information.
+     */
     private static function get_columns_info(string $table_name): array
     {
         $columns_info = FileDatabase::$data['%tables'][$table_name];
@@ -299,11 +412,24 @@ trait FileDatabaseAggregate
         return $columns_info;
     }
 
+    /**
+     * Retrieves the primary key column name for a specific table.
+     * @param string $table_name The table name.
+     * @return string The primary key column name.
+     */
     private static function get_primary_key(string $table_name): string
     {
         return FileDatabase::$data['%tables'][$table_name]['%primary_key'];
     }
 
+    /**
+     * Sets the value of a specific cell in a table.
+     * @param string $table_name The table name.
+     * @param string $column_name The column name.
+     * @param int $row_id The row ID.
+     * @param mixed $value The value to set.
+     * @return bool Returns true on success, false on failure.
+     */
     private static function set_cell(string $table_name, string $column_name, int $row_id, mixed $value = null): bool
     {
         $columns_info = static::get_columns_info($table_name);
@@ -335,6 +461,13 @@ trait FileDatabaseAggregate
         return true;
     }
 
+    /**
+     * Sets the values for an entire row in a table.
+     * @param string $table_name The table name.
+     * @param int|null $row_id The row ID (optional).
+     * @param array $row_cells The values to set in the row.
+     * @return int The number of cells set.
+     */
     private static function set_row(string $table_name, ?int $row_id = null, array $row_cells = []): int
     {
         $columns_info = static::get_columns_info($table_name);
@@ -364,7 +497,12 @@ trait FileDatabaseAggregate
         return $set_cells;
     }
 
-    // returns new row_id
+    /**
+     * Inserts a new row into a specific table.
+     * @param string $table_name The table name.
+     * @param array $row_cells The values for the new row.
+     * @return int The row ID of the inserted row.
+     */
     private static function insert_row(string $table_name, array $row_cells): int
     {
         $columns_info = static::get_columns_info($table_name);

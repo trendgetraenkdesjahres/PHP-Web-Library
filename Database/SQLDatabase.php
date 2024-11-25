@@ -3,24 +3,32 @@
 namespace  PHP_Library\Database;
 
 use  PHP_Library\Settings\Settings;
-use PDO;
-use PDOStatement;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
 use PHP_Library\Database\Table\Column\Column;
 use PHP_Library\Database\Table\SQLTable;
 use PHP_Library\Database\Error\DatabaseError;
 
 /**
- * DatabaseStorage is a class that handles database storage using PDO.
+ * Handles database operations using PDO for SQL-based databases.
+ * Provides methods for initializing the connection, querying, creating tables, and checking table existence.
+ * Dependent on `Settings` for configuration and `DatabaseError` for error handling.
  */
 class SQLDatabase extends Database
 {
-    private static PDO $pdo;
-    private static PDOStatement $result;
+    /**
+     * PDO instance for database connection.
+     * @var PDO
+     */
+    private static \PDO $pdo;
 
     /**
-     * Initialize the database connection.
-     *
+     * PDOStatement instance to store query results.
+     * @var PDOStatement
+     */
+    private static \PDOStatement $result;
+
+    /**
+     * Initialize the database connection using provided settings.
      * @return bool Returns true if initialization is successful, false otherwise.
      */
     protected static function initalize(): bool
@@ -46,12 +54,12 @@ class SQLDatabase extends Database
         $dns .= ";port=$port";
         $dns .= ";charset=$charset";
         $options = [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            \PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES   => false,
         ];
         try {
-            $pdo = new PDO(
+            $pdo = new \PDO(
                 $dns,
                 $username,
                 $password,
@@ -64,14 +72,18 @@ class SQLDatabase extends Database
         return true;
     }
 
+    /**
+     * Get the last inserted ID from the database.
+     * @return int|false The last inserted ID, or false if not available.
+     */
     public static function last_insert_id(): int|false
     {
         return self::$pdo->lastInsertId();
     }
 
+
     /**
      * Get a table instance by name.
-     *
      * @param string $table_name The name of the table.
      * @return SQLTable The table instance.
      */
@@ -82,9 +94,9 @@ class SQLDatabase extends Database
 
     /**
      * Create a table with the given name and columns.
-     *
      * @param string $table The name of the table.
-     * @param TableColumn ...$columns The columns to create.
+     * @param Column ...$columns The columns to create in the table.
+     * @return bool Returns true if the table is created successfully.
      */
     public static function create_table(string $table, Column ...$columns): bool
     {
@@ -124,10 +136,9 @@ class SQLDatabase extends Database
     }
 
     /**
-     * Check if table exists
-     *
+     * Check if a table exists in the database.
      * @param string $name The name of the table.
-     * @return bool
+     * @return bool Returns true if the table exists, false otherwise.
      */
     public static function table_exists(string $name): bool
     {
@@ -136,9 +147,14 @@ class SQLDatabase extends Database
         return (bool) self::get_queried_data();
     }
 
+    /**
+     * Get the result of the last query.
+     * @param bool $clean_array If true, returns a cleaned array of results.
+     * @return mixed The query result.
+     */
     protected static function get_queried_data(bool $clean_array = false): mixed
     {
-        $mode = PDO::FETCH_ASSOC;
+        $mode = \PDO::FETCH_ASSOC;
         $query_result = self::$result->fetchAll($mode);
         if ($clean_array) {
             return static::clean_array($query_result);
@@ -146,6 +162,11 @@ class SQLDatabase extends Database
         return $query_result;
     }
 
+    /**
+     * Execute the given SQL statement.
+     * @param AbstractStatement $sql_statement The SQL statement to execute.
+     * @return bool Returns true if the query is successful, false otherwise.
+     */
     protected static function execute_query(AbstractStatement $sql_statement): bool
     {
         try {
@@ -156,6 +177,11 @@ class SQLDatabase extends Database
         return true;
     }
 
+    /**
+     * Execute an unsafe SQL query (no prepared statements).
+     * @param string $sql_statement The SQL query string.
+     * @return bool Returns true if the query executes successfully, false otherwise.
+     */
     private static function unsafe_query(string $sql_statement): bool
     {
         try {

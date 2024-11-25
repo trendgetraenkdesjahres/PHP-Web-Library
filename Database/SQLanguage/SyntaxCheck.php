@@ -4,12 +4,34 @@ namespace PHP_Library\Database\SQLanguage;
 
 use PHP_Library\Database\SQLanguage\Error\SQLanguageError;
 
+/**
+ * Class SyntaxCheck
+ *
+ * Provides static methods to validate SQL syntax elements such as field names,
+ * table names, data types, and safe values.
+ * Throws exceptions for invalid syntax if $throws_errors is enabled.
+ */
 class SyntaxCheck
 {
+    /**
+     * Determines whether invalid syntax triggers exceptions.
+     *
+     * @var bool
+     */
     public static bool $throws_errors = true;
 
+    /**
+     * Private constructor to prevent instantiation of this utility class.
+     */
     private function __construct() {}
 
+    /**
+     * Validates whether a value is safe to use in SQL queries.
+     *
+     * @param string|null $value The value to validate.
+     *
+     * @return bool True if the value is safe; otherwise, throws an exception or returns false.
+     */
     public static function is_safe_value(string|null $value)
     {
         $value = is_null($value) ? 'NULL' : $value;
@@ -21,12 +43,11 @@ class SyntaxCheck
 
 
     /**
-     * Checks if a given string is a valid SQL field name.
-     * For table column names, keys in general...
+     * Validates whether a string is a valid SQL field name.
      *
-     * @param string $field_name The name to check.
+     * @param string $field_name The field name to validate.
      *
-     * @return bool True if the field name is valid; otherwise, false.
+     * @return bool True if valid; otherwise, throws an exception or returns false.
      */
     public static function is_field_name(string $field_name): bool
     {
@@ -46,12 +67,11 @@ class SyntaxCheck
     }
 
     /**
-     * Checks if a given string is a valid SQL table name.
-     * For table names
+     * Validates whether a string is a valid SQL table name.
      *
-     * @param string $table_name The name to check.
+     * @param string $table_name The table name to validate.
      *
-     * @return bool True if the table name is valid; otherwise, false.
+     * @return bool True if valid; otherwise, throws an exception or returns false.
      */
     public static function is_table_name(string $table_name): bool
     {
@@ -71,11 +91,11 @@ class SyntaxCheck
     }
 
     /**
-     * Checks if a given string is a valid SQL data type.
+     * Validates whether a string is a valid SQL data type.
      *
-     * @param string $type The SQL data type to check.
+     * @param string $type The SQL data type to validate.
      *
-     * @return bool True if the data type is valid; otherwise, false.
+     * @return bool True if valid; otherwise, throws an exception or returns false.
      */
     public static function is_data_type(string $type): bool
     {
@@ -90,11 +110,11 @@ class SyntaxCheck
     }
 
     /**
-     * Checks if a given SQL data type is indexable.
+     * Checks whether a given SQL data type is indexable.
      *
-     * @param string $type The SQL data type to check.
+     * @param string $type The SQL data type to validate.
      *
-     * @return bool True if the data type is indexable; otherwise, false.
+     * @return bool True if indexable; otherwise, throws an exception or returns false.
      */
     public static function is_indexable_data_type(string $type): bool
     {
@@ -116,6 +136,14 @@ class SyntaxCheck
         return true;
     }
 
+    /**
+     * Throws an exception or returns false based on $throws_errors.
+     *
+     * @param string $message The error message to throw or log.
+     *
+     * @return bool Always false if exceptions are not enabled.
+     * @throws SQLanguageError If $throws_errors is true.
+     */
     private static function throw_exception(string $message): bool
     {
         if (static::$throws_errors) {

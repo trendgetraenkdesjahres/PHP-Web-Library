@@ -10,45 +10,49 @@ use PHP_Library\Settings\Settings;
 use ReflectionClass;
 
 /**
- * Database is a place for tables stored in Databases or Files
+ * Abstract class representing a database.
+ * Provides methods to interact with database storage or file-based storage,
+ * including querying data, managing tables, and handling errors.
+ * Relies on `Settings` for configuration and `DatabaseError` for error handling.
  */
 abstract class Database
 {
     /**
-     * Holds the initialized storage instance implementation. It's can not be this abstract class Database, that will not work.
-     *
+     * Holds the initialized storage instance (SQL or File-based).
      * @var Database|null
      */
     private static ?Database $instance = null;
 
     /**
      * Initialize the database connection.
-     *
      * @return bool Returns true if initialization is successful, false otherwise.
      */
     abstract protected static function initalize(): bool;
 
+    /**
+     * Get the last inserted ID.
+     * @return int|false The last inserted ID, or false if not available.
+     */
     abstract public static function last_insert_id(): int|false;
 
     /**
-     * Get queried data.
-     *
-     * @param bool $clean_array if the result is an array, and has just one element, it will return this element (recursivly).
+     * Retrieve the queried data.
+     * @param bool $clean_array If true, flattens arrays with a single element.
      * @return mixed The queried data.
      */
     abstract protected static function get_queried_data(bool $clean_array = false): mixed;
 
     /**
-     * Internal implementation of the execution of a SQL Statement
+     * Execute the given SQL statement.
      * @param AbstractStatement $sql_statement The SQL statement to execute.
-     * @return bool success.
+     * @return bool Returns true on success, false on failure.
      */
     abstract protected static function execute_query(AbstractStatement $sql_statement): bool;
 
+
     /**
-     * Database is a place for tables stored in Databases or Files.
-     * It will be constructed by setting for `[Database]/database_name` or `[Database]/file_name` found in a `settings.ini`-file.
-     * If using the FileDatabase, the location 'Database/file_name' needs to be writable by the php-server.
+     * Database constructor to initialize the database connection.
+     * Calls `initalize()` to set up the connection.
      */
     final public function __construct()
     {
@@ -56,10 +60,9 @@ abstract class Database
     }
 
     /**
-     * Execute SQL Statement.
-     * Get the results with `get_queried_data()`
+     * Execute a SQL query and fetch results.
      * @param AbstractStatement $sql_statement The SQL statement to execute.
-     * @return bool success.
+     * @return bool Returns true on success, false on failure.
      */
     final public static function query(AbstractStatement $sql_statement): bool
     {
@@ -70,9 +73,8 @@ abstract class Database
     }
 
     /**
-     * Get recent queried data.
-     *
-     * @param bool $clean_array if the result is an array, and has just one element, it will return this element (recursivly).
+     * Get the result of the most recent query.
+     * @param bool $clean_array If true, flattens arrays with a single element.
      * @return mixed The queried data.
      */
     public static function get_query_result(bool $clean_array = false): mixed
@@ -82,7 +84,6 @@ abstract class Database
 
     /**
      * Get a table instance by name.
-     *
      * @param string $name The name of the table.
      * @return DataTable The table instance.
      */
@@ -91,43 +92,58 @@ abstract class Database
         return self::get_instance()::get_table($name);
     }
 
+    /**
+     * Get the last inserted ID.
+     * @return int|false The last inserted ID or false if unavailable.
+     */
     public static function get_last_insert_id(): int|false
     {
         return self::get_instance()::last_insert_id();
     }
 
     /**
-     * Create a table instance based on the specified name and columns.
-     *
-     * @param string $name The name of the table.
-     * @param Column ...$columns Variable-length list of TableColumn objects representing table columns.
-     * @return bool Success.
+     * Create a new table with the specified columns.
+     * @param string $name The table name.
+     * @param Column ...$columns The table columns.
+     * @return bool Returns true on success, false on failure.
      */
     public static function create_table(string $name, Column ...$columns): bool
     {
         return self::get_instance()::create_table($name, ...$columns);
     }
 
+    /**
+     * Check if a table exists.
+     * @param string $name The name of the table.
+     * @return bool True if the table exists, false otherwise.
+     */
     public static function table_exists(string $name): bool
     {
         return self::get_instance()::table_exists($name);
     }
 
+    /**
+     * Get the type of the database storage (SQL or File-based).
+     * @return string The class name of the database storage implementation.
+     */
     public static function get_type(): string
     {
         return (new ReflectionClass(self::get_instance()))->getShortName();
     }
 
+    /**
+     * Get the last database error.
+     * @return DatabaseError|null The last error or null if no error.
+     */
     public static function get_last_error(): DatabaseError|null
     {
         return isset(DatabaseError::$last_error) ? DatabaseError::$last_error : null;
     }
 
     /**
-     * Factory method to get or initialize the appropriate storage instance.
-     *
-     * @return Database The initialized storage instance.
-     * @throws DatabaseError If no suitable configuration for Filebased or DBbased setting is found.
+     * Factory method to get or initialize the appropriate database instance.
+     * @return Database The initialized database instance.
+     * @throws DatabaseError If no suitable database configuration is found.
      */
     protected static function get_instance(): static
     {
@@ -144,6 +160,11 @@ abstract class Database
         return self::$instance;
     }
 
+    /**
+     * Clean an array by flattening single-element arrays.
+     * @param array $array The array to clean.
+     * @return mixed The cleaned array or value.
+     */
     protected static function clean_array(array $array): mixed
     {
         $count = count($array);
