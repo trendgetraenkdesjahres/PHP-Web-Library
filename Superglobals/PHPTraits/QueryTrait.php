@@ -2,14 +2,22 @@
 
 namespace PHP_Library\Superglobals\PHPTraits;
 
+/**
+ * Trait QueryTrait
+ *
+ * Provides functionality for parsing query strings into associative arrays.
+ * This trait is commonly used for handling and parsing HTTP query strings.
+ */
 trait QueryTrait
 {
     /**
-     * Parse a query string into an array.
+     * Parse a query string into an associative array.
      *
-     * @param string [optional] $query The query string to parse. If not given, it parses $_SERVER["QUERY_STRING"].
+     * If no query string is provided, it defaults to parsing the value of `$_SERVER["QUERY_STRING"]`.
      *
-     * @return array The parsed query as an array.
+     * @param string|null $query Optional. The query string to parse. Defaults to `$_SERVER["QUERY_STRING"]` if not provided.
+     *
+     * @return array The parsed query string as an associative array. Keys without values are set to `true`.
      */
     protected static function parse_query(?string $query = null): array
     {

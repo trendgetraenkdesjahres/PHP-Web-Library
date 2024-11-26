@@ -3,22 +3,38 @@
 namespace PHP_Library\Superglobals;
 
 use PHP_Library\Error\Warning;
-use PHP_Library\Superglobals\Error\CookieError;
 
+/**
+ * Class Cookie
+ *
+ * Provides a utility class for handling HTTP cookies, including setting, retrieving, and unsetting cookies.
+ * Includes support for typed cookie values and array-based cookies.
+ */
 class Cookie
 {
+    /**
+     * @var array Stores parameters for cookies such as type, path, domain, secure, and httponly attributes.
+     */
     protected static array $cookie_parameters = [];
 
+    /**
+     * Checks if a cookie with the specified key exists.
+     *
+     * @param string $key The name of the cookie to check.
+     * @return bool True if the cookie exists, false otherwise.
+     */
     public static function has_field(string $key): bool
     {
         return isset($_COOKIE[$key]);
     }
 
     /**
-     * returns false if cookie is not set.
+     * Retrieves the value of a cookie by its key.
+     * Returns the value in its appropriate type if specified or defaults to string.
+     * Triggers a warning if the cookie is undefined.
      *
-     * @param [type] $key
-     * @return mixed
+     * @param string $key The name of the cookie to retrieve.
+     * @return mixed The value of the cookie, or null if it does not exist.
      */
     public static function get(string $key): mixed
     {
@@ -45,17 +61,20 @@ class Cookie
         }
         return (string) $value;
     }
+
     /**
-     * Send a cookie. Will not work if output is already send. Values will be avaible when working on the next request using `Cookie::get($name)`.
+     * Sets a cookie with the specified attributes.
+     * The cookie will be available on subsequent requests.
+     *
      * @link https://php.net/manual/en/function.setcookie.php
      * @param string $name The name of the cookie.
-     * @param string|array|int $value The value of the cookie. It is stored on the client; do not store sensitive information.
-     * @param int|null $expire_in_seconds The number of seconds before the cookie is expired. If set to 0, the cookie will expire at the end of the session (when the browser closes). If set to 'null' and the browser will delete it.
-     * @param string $path The path on the server in which the cookie will be available on.
-     * @param string $domain The domain that the cookie is available.
-     * @param bool $secure Indicates that the cookie should only be transmitted over a secure HTTPS connection from the client.
-     * @param bool $httponly When true the cookie will be made accessible only through the HTTP protocol.
-     * @return bool Success.
+     * @param string|array|int|float $value The value of the cookie. Sensitive information should not be stored.
+     * @param int|null $expire_in_seconds The expiration time in seconds. Null means the cookie expires when the browser closes.
+     * @param string $path The path where the cookie is accessible.
+     * @param string $domain The domain where the cookie is accessible.
+     * @param bool $secure Whether the cookie is transmitted over HTTPS only.
+     * @param bool $httponly Whether the cookie is accessible only via HTTP protocol.
+     * @return bool True if the cookie is successfully set, false otherwise.
      */
     public static function set(string $name, string|array|int|float $value, ?int $expire_in_seconds = 0, string $path = "", string $domain = "", bool $secure = false, bool $httponly = false): bool
     {
@@ -79,6 +98,14 @@ class Cookie
         return setcookie($name, $value, $expires_or_options, $path, $domain, $secure, $httponly);
     }
 
+
+    /**
+     * Deletes one or more cookies by their names.
+     * Removes them from both the client and the internal cookie parameters array.
+     *
+     * @param string ...$names The names of the cookies to unset.
+     * @return bool True if all cookies are successfully unset, false otherwise.
+     */
     public static function unset(string ...$names): bool
     {
         foreach ($names as $name) {
@@ -102,6 +129,13 @@ class Cookie
         return true;
     }
 
+    /**
+     * Decodes a URL-encoded string into an associative array.
+     * Used to handle array-based cookies.
+     *
+     * @param string $string The URL-encoded string to decode.
+     * @return array|false The decoded array, or false if the string cannot be decoded.
+     */
     protected static function decode_str_to_array(string $string): array|false
     {
         $values = [];
