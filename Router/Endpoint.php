@@ -17,6 +17,12 @@ abstract class Endpoint implements Stringable
 
     public array $http_headers = [];
 
+    /**
+     *
+     * @var Middleware[]
+     */
+    private array $middleware = [];
+
     public int $status_code = 200;
 
     protected string $title;
@@ -61,6 +67,12 @@ abstract class Endpoint implements Stringable
         return $this;
     }
 
+    public function add_middleware(Middleware $middleware): static
+    {
+        $this->middleware[] = $middleware;
+        return $this;
+    }
+
     public function get_link(?string $text = null): Element
     {
         if ($text) {
@@ -70,6 +82,13 @@ abstract class Endpoint implements Stringable
             return new Element('a', ['href' => $this->path], $this->title);
         }
         return new Element('a', ['href' => $this->path], '@');
+    }
+
+    public function restrict_access(): static
+    {
+        $bouncer = new Middleware();
+        $bouncer->authenticate();
+        return $this->add_middleware($bouncer);
     }
 
     public function set_title(string $title): static
