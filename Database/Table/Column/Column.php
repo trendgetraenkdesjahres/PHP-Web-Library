@@ -76,9 +76,7 @@ class Column
             }
         }
         $this->type = $type;
-
         $this->name = trim($name);
-        // TODO apply sql lang check on type!!
     }
 
     public function __get($property): string
