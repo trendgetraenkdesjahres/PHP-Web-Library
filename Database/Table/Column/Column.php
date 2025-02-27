@@ -2,8 +2,10 @@
 
 namespace PHP_Library\Database\Table\Column;
 
+use PHP_Library\Database\Database;
 use PHP_Library\Database\SQLanguage\Error\SQLanguageError;
 use PHP_Library\Database\SQLanguage\SyntaxCheck;
+use PHP_Library\Error\Error;
 
 /**
  * Class Column
@@ -22,6 +24,14 @@ class Column
      * @var string
      */
     public string $name;
+
+
+    /**
+     * The type of the column.
+     *
+     * @var ColumnType
+     */
+    protected ColumnType $type;
 
     /**
      * Indicates if the column has an auto-increment property.
@@ -50,7 +60,7 @@ class Column
      */
     public function __construct(
         string $name,
-        public string $type = 'string',
+        string|ColumnType $type = 'string',
         public ?int $length = null,
         public bool $nullable = false,
         public bool $timestamp = false
@@ -58,7 +68,31 @@ class Column
         if (! SyntaxCheck::is_field_name($name)) {
             throw new SQLanguageError("{$name} is not a column name.");
         }
+        if (is_string($type)) {
+            try {
+                $type = ColumnType::create_from_string($type);
+            } catch (\Error $e) {
+                throw new Error("Can not create Column of type $type");
+            }
+        }
+        $this->type = $type;
+
         $this->name = trim($name);
         // TODO apply sql lang check on type!!
+    }
+
+    public function __get($property): string
+    {
+        if ($property !== 'type') {
+            return null;
+        }
+        switch (Database::get_type()) {
+            case 'FileDatabase':
+                return $this->type->get_php_type();
+            case 'SQLDatabase':
+                return $this->type->get_sql_type();
+            default:
+                throw new Error("No Database Type");
+        }
     }
 }
