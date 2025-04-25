@@ -2,6 +2,7 @@
 
 namespace  PHP_Library\Settings;
 
+use PHP_Library\CLIConsole\CLIConsoleTrait;
 
 /**
  * Settings
@@ -10,6 +11,9 @@ namespace  PHP_Library\Settings;
  */
 class Settings
 {
+
+
+    use CLIConsoleTrait;
     public static array $settings = [];
     private static bool $initialized = false;
     protected static $file_name = 'settings.ini';
@@ -42,13 +46,14 @@ class Settings
      *
      * @return mixed
      */
-    public static function get(string $key, ?string $type_or_class = null, $strict = false): mixed
+    public static function get(string $key, ?string $type_or_class = null, bool $strict = false): mixed
     {
         self::initialize();
         $section = self::$main_section;
         $key = self::get_section_key($key, $section);
         $setting_value = self::get_settings_value($section, $key, $strict);
-        if ($type_or_class) {
+        if ($type_or_class)
+        {
             return self::cast_value($type_or_class, $setting_value);
         }
         return $setting_value;
@@ -66,22 +71,26 @@ class Settings
     {
         self::initialize();
 
-        if (strpbrk($key, '{}|&~![()^"')) {
+        if (strpbrk($key, '{}|&~![()^"'))
+        {
             throw new \Error("'$key' must not contain any of this characters: {}|&~![()\"");
         }
 
-        if (is_string($default)) {
+        if (is_string($default))
+        {
             $default = self::escape_characters($default);
         }
 
         $section = self::$main_section;
         $key = self::get_section_key($key, $section);
 
-        if (!isset(self::$settings[$section])) {
+        if (!isset(self::$settings[$section]))
+        {
             self::$settings[$section] = [];
         }
 
-        if (!isset(self::$settings[$section][$key])) {
+        if (!isset(self::$settings[$section][$key]))
+        {
             self::$settings[$section][$key] = $default;
             self::write_current_settings_to_ini();
             return true;
@@ -96,10 +105,12 @@ class Settings
      */
     private static function initialize(): void
     {
-        if (self::$initialized) {
+        if (self::$initialized)
+        {
             return;
         }
-        if (!file_exists(filename: self::$file_name,)) {
+        if (!file_exists(filename: self::$file_name,))
+        {
             self::touch_ini();
         }
         self::load();
@@ -151,15 +162,19 @@ class Settings
             $class->getDocComment()
         ));
         $settings_ini_content = '';
-        foreach (explode(PHP_EOL, $comment_string) as $line) {
+        foreach (explode(PHP_EOL, $comment_string) as $line)
+        {
             $settings_ini_content .= "; " . trim($line) . PHP_EOL;
         }
         $settings_ini_content .= PHP_EOL;
 
-        foreach ($content as $section_key => $section_items) {
+        foreach ($content as $section_key => $section_items)
+        {
             $settings_ini_content .= "[$section_key]" . PHP_EOL;
-            foreach ($section_items as $key => $value) {
-                switch ($type = gettype($value)) {
+            foreach ($section_items as $key => $value)
+            {
+                switch ($type = gettype($value))
+                {
                     case 'boolean':
                         $value = $value ? 'true' : 'false';
                         break;
@@ -187,7 +202,8 @@ class Settings
         if (file_put_contents(
             filename: self::$file_name,
             data: $settings_ini_content
-        ) === false) {
+        ) === false)
+        {
             throw new \Error("Could not write data to '" . self::$file_name . "'");
         }
     }
@@ -227,7 +243,8 @@ class Settings
     private static function get_section_key(string $key, &$section): string
     {
         $section_and_key = explode('/', $key, 2);
-        switch (count($section_and_key)) {
+        switch (count($section_and_key))
+        {
             case 1:
                 return $section_and_key[0];
             case 2:
@@ -240,11 +257,13 @@ class Settings
 
     private static function get_settings_value(string $section, string $key, bool $strict): mixed
     {
-        if (!isset(self::$settings[$section])) {
+        if (!isset(self::$settings[$section]))
+        {
             if ($strict) throw new \Error("Setting section [{$section}] was not found.");
             return null;
         }
-        if (!isset(self::$settings[$section][$key])) {
+        if (!isset(self::$settings[$section][$key]))
+        {
             if ($strict) throw new \Error("Setting {$key} in [{$section}] was not found.");
             return null;
         }
@@ -254,10 +273,15 @@ class Settings
 
     private static function cast_value(string $type_or_class, mixed $value): mixed
     {
-        if (class_exists($type_or_class)) {
+        if (class_exists($type_or_class))
+        {
             return new $type_or_class($value);
-        } elseif (settype($value, $type_or_class)) {
-        } else {
+        }
+        elseif (settype($value, $type_or_class))
+        {
+        }
+        else
+        {
             throw new \Error("'{$type_or_class}' is not a type or class.");
         }
         return $value;

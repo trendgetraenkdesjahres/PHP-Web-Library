@@ -24,7 +24,8 @@ class PHPFile extends Endpoint
     public function get_content(): string
     {
         ob_start();
-        foreach ($this->vars as $var_name => $value) {
+        foreach ($this->vars as $var_name => $value)
+        {
             $$var_name = $value;
         }
         require $this->file;
@@ -34,8 +35,9 @@ class PHPFile extends Endpoint
     protected function constructor(mixed $file): static
     {
         $file =  static::get_abs_path($file);
-        if (!is_file($file)) {
-            throw new Error("\$file is not a file");
+        if (!is_file($file))
+        {
+            throw new Error("\$file '{$file}' is not a file");
         }
         $this->file = $file;
         return $this;

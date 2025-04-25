@@ -88,7 +88,7 @@ trait RequestTrait
         }
 
         if (!isset(static::$query[$name])) {
-            Warning::trigger("Undefined Cookie Field '{$name}'");
+            Warning::trigger("Undefined Request Field '{$name}'");
             return false;
         }
         return static::$query[$name];

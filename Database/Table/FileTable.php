@@ -2,6 +2,7 @@
 
 namespace  PHP_Library\Database\Table;
 
+use PHP_Library\Database\Database;
 use PHP_Library\Database\FileDatabase;
 
 /**
@@ -15,6 +16,20 @@ use PHP_Library\Database\FileDatabase;
  */
 class FileTable extends DataTable
 {
+
+    public function get_columns(): array
+    {
+        return array_keys(FileDatabase::$data[$this->name]);
+    }
+    public function get_primary_key(): string
+    {
+        if (! isset(static::$primary_key))
+        {
+            static::$primary_key = FileDatabase::$data['%tables'][$this->name]['%primary_key'];
+        }
+        return static::$primary_key;
+    }
+
     /**
      * Default column name for the (hidden) row identifier.
      *

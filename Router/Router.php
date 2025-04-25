@@ -3,6 +3,7 @@
 namespace  PHP_Library\Router;
 
 use PHP_Library\ClassTraits\SingletonPattern;
+use PHP_Library\CLIConsole\CLIConsole;
 use PHP_Library\Router\EndpointTypes\Redirect;
 use PHP_Library\Router\Error\RouterError;
 use PHP_Library\Router\HTMLResponse\HTMLDoc;
@@ -21,7 +22,8 @@ class Router
     {
         self::init_singleton();
         $method = strtoupper($endpoint->http_method);
-        if (isset(self::$endpoints[$method][$endpoint->path])) {
+        if (isset(self::$endpoints[$method][$endpoint->path]))
+        {
             throw new RouterError("Endpoint {$method} '{$endpoint}' is already set.");
         }
         self::$endpoints[$method][$endpoint->path] = $endpoint;
@@ -34,7 +36,8 @@ class Router
 
     public static function redirect_now(string $location, array $query_data = []): void
     {
-        if (headers_sent()) {
+        if (headers_sent())
+        {
             throw new RouterError("Can not trigger redirect after headers been sent.");
         }
         $redirect_endpoint = new Redirect(Router::$current_endpoint->path, $location);
@@ -45,10 +48,16 @@ class Router
 
     private function __construct()
     {
-        if (Server::is_serving_http()) {
-            header_register_callback(function () {
+        if (Server::is_serving_http())
+        {
+            header_register_callback(function ()
+            {
                 static::php_header_callback();
             });
+        }
+        if (Server::is_cli())
+        {
+            CLIConsole::initiate();
         }
     }
 
@@ -56,8 +65,9 @@ class Router
     {
         $content = static::current_endpoint()->get_content();
         $status_code = static::current_endpoint()->status_code;
-        if ($content === false) {
-            $content = "Endpoint registred but no get_content().";
+        if ($content === false)
+        {
+            $content = "Endpoint registered but no get_content().";
             $status_code = 500;
         }
         self::send_status_code($status_code);
@@ -68,7 +78,8 @@ class Router
     protected static function decode_content(mixed $content): string
     {
         $client_accept_header = explode(',', Get::get_http_header_field('accept'));
-        switch ($client_accept_header[0]) {
+        switch ($client_accept_header[0])
+        {
             case 'text/html':
                 return self::get_html_doc($content);
                 break;
@@ -86,8 +97,10 @@ class Router
 
     protected static function get_html_doc($content): string
     {
-        foreach (self::$html_templates as $regex => $path) {
-            if (preg_match($regex, Get::get_path())) {
+        foreach (self::$html_templates as $regex => $path)
+        {
+            if (preg_match($regex, Get::get_path()))
+            {
                 HTMLDoc::set_template_file($path);
             }
         }
@@ -96,8 +109,10 @@ class Router
 
     protected static function php_header_callback()
     {
-        foreach (static::current_endpoint()->http_headers as $field => $value) {
-            if (is_array($value)) {
+        foreach (static::current_endpoint()->http_headers as $field => $value)
+        {
+            if (is_array($value))
+            {
                 $value = rtrim(implode(';', $value), ";");
             }
             header("$field: $value");
@@ -106,12 +121,14 @@ class Router
 
     private static function current_endpoint(): Endpoint
     {
-        if (isset(self::$current_endpoint)) {
+        if (isset(self::$current_endpoint))
+        {
             return self::$current_endpoint;
         }
         $path = Get::get_path();
         $method = Server::get_request_method();
-        if (! isset(self::$endpoints[$method][$path])) {
+        if (! isset(self::$endpoints[$method][$path]))
+        {
             throw new RouterError("No Route for $method '$path' defined.");
         }
         self::$current_endpoint = self::$endpoints[$method][$path];
@@ -120,7 +137,8 @@ class Router
 
     private static function send_status_code(int $code, string $message = ''): void
     {
-        if (headers_sent()) {
+        if (headers_sent())
+        {
             throw new RouterError("Headers already sent.");
         }
         http_response_code($code);

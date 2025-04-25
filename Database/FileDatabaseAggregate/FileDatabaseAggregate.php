@@ -2,7 +2,7 @@
 
 namespace PHP_Library\Database\FileDatabaseAggregate;
 
-use PHP_Library\Database\Error\DatabaseError;
+use PHP_Library\Database\Error\DatabaseError as Error;
 use PHP_Library\Database\FileDatabase;
 use PHP_Library\Database\SQLanguage\Statement\Delete;
 use PHP_Library\Database\SQLanguage\Statement\Insert;
@@ -47,7 +47,6 @@ trait FileDatabaseAggregate
         $table_name = $sql_statement->table;
         $columns_info = static::get_columns_info($table_name);
         $values = $sql_statement->values;
-
         $row_cells = [];
         if (! $sql_statement->columns_string || $sql_statement->columns_string == "*") {
             foreach ($columns_info as $column_name => $column_property) {
@@ -77,6 +76,7 @@ trait FileDatabaseAggregate
     protected static function execute_select(Select $sql_statement): array
     {
         $table_name = $sql_statement->table;
+
         $row_ids = self::get_row_ids_from_where_clause($sql_statement);
         $rows = [];
         if ($sql_statement->columns_string === "*") {
@@ -123,6 +123,9 @@ trait FileDatabaseAggregate
     private static function get_row_ids_from_where_clause(Select|Delete|Update $sql_statement): array
     {
         $table_name = $sql_statement->table;
+        if (!key_exists($table_name, FileDatabase::$data)) {
+            throw new Error("Table {$table_name} does not exist.");
+        }
         if (! $sql_statement->get_where_clause()) {
             // assuming the first column is complete
             $first_column = array_key_first(FileDatabase::$data[$table_name]);
@@ -165,7 +168,7 @@ trait FileDatabaseAggregate
                     $row_ids = static::operate_row_array($and_or_or, $row_ids, static::get_ids_where_not_in($table_name, $l_operant, $r_operant));
                     break;
                 default:
-                    DatabaseError::trigger("Method for '{$where_clause->operator}'-operator not implemented.");
+                    Error::trigger("Method for '{$where_clause->operator}'-operator not implemented.");
             }
         }
         return $row_ids;
@@ -209,6 +212,9 @@ trait FileDatabaseAggregate
         $row = [];
         foreach (FileDatabase::$data[$table] as $column => $entries) {
             if (in_array($column, $select_columns)) {
+                if (!isset($entries[$row_id])) {
+                    throw new Error("'{$table}.{$column}.{$row_id}' is does not exist.");
+                }
                 $row[$column] = $entries[$row_id];
             }
         }
@@ -225,7 +231,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_equals(string $table, string $column, mixed $value): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($cell === $value) {
                 $ids[] = $id;
             }
@@ -243,7 +249,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_not_equals(string $table, string $column, mixed $value): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($cell !== $value) {
                 $ids[] = $id;
             }
@@ -261,7 +267,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_greater_than(string $table, string $column, mixed $value): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($cell > $value) {
                 $ids[] = $id;
             }
@@ -279,7 +285,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_greater_or_equal(string $table, string $column, mixed $value): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($cell >= $value) {
                 $ids[] = $id;
             }
@@ -297,7 +303,7 @@ trait FileDatabaseAggregate
     private static function get_ids_less_than(string $table, string $column, mixed $value): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($cell < $value) {
                 $ids[] = $id;
             }
@@ -315,7 +321,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_less_than_or_equal(string $table, string $column, mixed $value): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($cell <= $value) {
                 $ids[] = $id;
             }
@@ -334,7 +340,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_between(string $table, string $column, int|float $lower, int|float $higher): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if ($lower < $cell && $cell < $higher) {
                 $ids[] = $id;
             }
@@ -356,7 +362,7 @@ trait FileDatabaseAggregate
         $value = preg_replace('/(?<!\\)%/', '.*', $value);
         // '_'-Wildcard
         $value = preg_replace('/(?<!\\)_/', '.', $value);
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if (preg_match($value, $cell)) {
                 $ids[] = $id;
             }
@@ -374,7 +380,7 @@ trait FileDatabaseAggregate
     private static function get_ids_where_in(string $table, string $column, array $values): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if (array_search($cell, $values)) {
                 $ids[] = $id;
             }
@@ -392,12 +398,20 @@ trait FileDatabaseAggregate
     private static function get_ids_where_not_in(string $table, string $column, array $values): array
     {
         $ids = [];
-        foreach (FileDatabase::$data[$table][$column] as $id => $cell) {
+        foreach (static::get_column($table, $column) as $id => $cell) {
             if (! array_search($cell, $values)) {
                 $ids[] = $id;
             }
         }
         return $ids;
+    }
+
+    private static function get_column(string $table_name, string $column): array
+    {
+        if (!key_exists($column, FileDatabase::$data[$table_name])) {
+            throw new Error("'{$table_name}.{$column}' does not exist.");
+        }
+        return FileDatabase::$data[$table_name][$column];
     }
 
     /**
@@ -439,7 +453,7 @@ trait FileDatabaseAggregate
         $primary_key = static::get_primary_key($table_name);
         if ($column_name == $primary_key) {
             if (false !== array_search($value, FileDatabase::$data[$table_name][$column_name], true)) {
-                DatabaseError::trigger("$table_name.$column_name (primary key) must be unique.");
+                Error::trigger("$table_name.$column_name (primary key) must be unique.");
                 return false;
             }
         }
@@ -454,7 +468,7 @@ trait FileDatabaseAggregate
             return true;
         }
         if (! static::is_value_in_column_allowed($table_name, $column_name, $value)) {
-            DatabaseError::trigger("Value for '$column_name' needs to be type of '{$columns_info[$column_name]['type']}' in '$table_name'.");
+            Error::trigger("Value for '$column_name' needs to be type of '{$columns_info[$column_name]['type']}' in '$table_name'.");
             return false;
         }
         FileDatabase::$data[$table_name][$column_name][$row_id] = $value;
@@ -475,13 +489,13 @@ trait FileDatabaseAggregate
         foreach ($columns_info as $column_name => $column_property) {
             // if it's an auto increment column but a value is given.
             if ($column_property['auto_increment'] && isset($row_cells[$column_name]) && $row_cells[$column_name]) {
-                DatabaseError::trigger("$table_name.$column_name is an auto increment column. can not accept value other than null.");
+                Error::trigger("$table_name.$column_name is an auto increment column. can not accept value other than null.");
             }
             // if the value is not set / empty.
             if ((!isset($row_cells[$column_name]) || ! $row_cells[$column_name]) && !$column_property['nullable']) {
                 // exception: auto increment will always be unset. set it here to null,
                 if (! $column_property['auto_increment']) {
-                    DatabaseError::trigger("$table_name.$column_name can not be empty/null");
+                    Error::trigger("$table_name.$column_name can not be empty/null");
                 } else {
                     $row_cells[$column_name] = null;
                 }
@@ -492,7 +506,7 @@ trait FileDatabaseAggregate
             $set_cells = $set_cells + (int) static::set_cell($table_name, $column_name, $row_id, $value);
         }
         if (!empty($row_cells)) {
-            DatabaseError::trigger("Missing keys: " . implode(', ', array_keys($row_cells)));
+            Error::trigger("Missing keys: " . implode(', ', array_keys($row_cells)));
         }
         return $set_cells;
     }
@@ -505,6 +519,7 @@ trait FileDatabaseAggregate
      */
     private static function insert_row(string $table_name, array $row_cells): int
     {
+
         $columns_info = static::get_columns_info($table_name);
         $new_row_key = static::get_new_insert_row_key($table_name);
         foreach ($columns_info as $column_name => $column_property) {
@@ -513,7 +528,7 @@ trait FileDatabaseAggregate
                 continue;
             }
             if (!isset($row_cells[$column_name]) && !$column_property['nullable']) {
-                DatabaseError::trigger("$table_name.$column_name can not be empty/null");
+                Error::trigger("$table_name.$column_name can not be empty/null");
                 continue;
             }
             $value = $row_cells[$column_name];

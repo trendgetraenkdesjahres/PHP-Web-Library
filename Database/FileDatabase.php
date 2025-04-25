@@ -2,7 +2,7 @@
 
 namespace  PHP_Library\Database;
 
-use PHP_Library\Database\Error\DatabaseError;
+use PHP_Library\Database\Error\DatabaseError as Error;
 use PHP_Library\Database\FileDatabaseAggregate\FileDatabaseAggregate;
 use PHP_Library\Database\SQLanguage\Statement\AbstractStatement;
 use PHP_Library\Database\Table\Column\Column;
@@ -62,23 +62,29 @@ class FileDatabase extends Database
     {
         Settings::register('Database/file_name');
         $path = Settings::get('Database/file_name');
-        if (!str_starts_with($path, DIRECTORY_SEPARATOR)) {
+        if (!str_starts_with($path, DIRECTORY_SEPARATOR))
+        {
             $path = getcwd() . '/' . $path;
         }
         self::$file = new FileHandle($path);
-        try {
+        try
+        {
             self::$file
                 ->create_file(force: false)
                 ->open_file()
                 ->close_file();
             self::$data = self::$file->get_memory();
             return true;
-        } catch (\Throwable $t) {
-            DatabaseError::trigger("Could not initalize File-Database connection: " . $t->getMessage());
         }
-        register_shutdown_function(function () {
+        catch (\Throwable $t)
+        {
+            Error::trigger("Could not initalize File-Database connection: " . $t->getMessage());
+        }
+        register_shutdown_function(function ()
+        {
             self::$file->close_file();
         });
+        return true;
     }
 
     /**
@@ -89,6 +95,15 @@ class FileDatabase extends Database
     public static function get_table(string $table_name): FileTable
     {
         return new FileTable($table_name, false);
+    }
+
+    /**
+     * Get all table names.
+     * @return string[] The table names.
+     */
+    public static function get_tables(): array
+    {
+        return array_keys(static::$data['%tables']);
     }
 
     /**
@@ -109,39 +124,53 @@ class FileDatabase extends Database
      */
     public static function create_table(string $table, Column ...$columns): bool
     {
-        if (self::$data) {
-            if (key_exists($table, self::$data)) {
+        if (self::$data)
+        {
+            if (key_exists($table, self::$data))
+            {
                 Warning::trigger("'$table' already exists. Not created.");
                 return false;
             }
-        } else {
+        }
+        else
+        {
             self::$data = [];
         }
         // check primary Key: there has be exactly one and in first place
         $primary_key_columns = [];
-        foreach ($columns as $i => $column) {
-            if ($column::$is_primary_key) {
+        foreach ($columns as $i => $column)
+        {
+            if ($column::$is_primary_key)
+            {
                 $primary_key_columns[] = $i;
             }
         }
-        if (empty($primary_key_columns)) {
+        if (empty($primary_key_columns))
+        {
             $primary_key = new PrimaryAutoIncrementKey(FileTable::$default_id_column_name);
             array_unshift($columns, $primary_key);
-        } else if (count($primary_key_columns) === 1) {
+        }
+        else if (count($primary_key_columns) === 1)
+        {
             $primary_key = $columns[$primary_key_columns[0]];
-        } else {
-            throw new DatabaseError("A table can have only ONE primary key.");
+        }
+        else
+        {
+            throw new Error("A table can have only ONE primary key.");
         }
 
         // build table
         self::$data[$table] = [];
         self::$data['%tables'][$table]['%primary_key'] = $primary_key->name;
-        foreach ($columns as $column) {
+        foreach ($columns as $column)
+        {
             self::$data[$table][$column->name] = [];
+            $column_type = $column->type->get_php_type();
+            $column_nullable = $column->type->nullable;
             self::$data['%tables'][$table][$column->name] =
                 [
-                    'type' => $column->type,
-                    'nullable' => $column->nullable,
+                    'type' => $column_type,
+                    'nullable' => $column_nullable,
                     'timestamp' => $column->timestamp,
                     'auto_increment' => isset($column::$auto_increment) ? $column::$auto_increment : false
                 ];
@@ -159,14 +188,18 @@ class FileDatabase extends Database
      */
     public static function table_exists(string $table, ?string $throwable = null): bool
     {
-        if (!self::$data) {
-            if ($throwable) {
+        if (!self::$data)
+        {
+            if ($throwable)
+            {
                 throw new $throwable("Database is empty.");
             }
             return false;
         }
-        if (!key_exists($table, self::$data)) {
-            if ($throwable) {
+        if (!key_exists($table, self::$data))
+        {
+            if ($throwable)
+            {
                 throw new $throwable("Table '$table' does not exist");
             }
             return false;
@@ -181,7 +214,9 @@ class FileDatabase extends Database
      */
     protected static function get_queried_data(bool $clean_array = false): mixed
     {
-        if ($clean_array) {
+
+        if ($clean_array)
+        {
             return static::clean_array(self::$query_result);
         }
         return self::$query_result;
@@ -195,46 +230,59 @@ class FileDatabase extends Database
     protected static function execute_query(AbstractStatement $sql_statement): bool
     {
         $command = strtoupper((new \ReflectionClass($sql_statement))->getShortName());
-        switch ($command) {
-            case 'DELETE':
-                static::$data = static::$file->open_file('r+')
-                    ->get_memory();
-                static::$query_result = static::execute_delete($sql_statement);
-                static::$file->write_file(static::$data)
-                    ->close_file();
-                break;
+        try
+        {
+            switch ($command)
+            {
+                case 'DELETE':
+                    static::$data = static::$file->open_file('r+')
+                        ->get_memory();
+                    static::$query_result = static::execute_delete($sql_statement);
+                    static::$file->write_file(static::$data)
+                        ->close_file();
+                    break;
 
-            case 'INSERT':
-                static::$data = static::$file->open_file('r+')
-                    ->get_memory();
-                $last_insert_id = static::execute_insert($sql_statement);
-                if (! $last_insert_id) {
-                    static::$query_result = false;
-                } else {
-                    static::$query_result = true;
-                    static::$last_insert_id = $last_insert_id;
-                }
-                static::$file->write_file(static::$data)
-                    ->close_file();
-                break;
+                case 'INSERT':
+                    static::$data = static::$file->open_file('r+')
+                        ->get_memory();
+                    $last_insert_id = static::execute_insert($sql_statement);
+                    if (! $last_insert_id)
+                    {
+                        static::$query_result = false;
+                    }
+                    else
+                    {
+                        static::$query_result = true;
+                        static::$last_insert_id = $last_insert_id;
+                    }
+                    static::$file->write_file(static::$data)
+                        ->close_file();
+                    break;
 
-            case 'SELECT':
-                static::$data = static::$file->open_file('r')
-                    ->get_memory();
-                static::$query_result = static::execute_select($sql_statement);
-                static::$file->close_file();
-                break;
+                case 'SELECT':
+                    static::$data = static::$file->open_file('r')
+                        ->get_memory();
 
-            case 'UPDATE':
-                static::$data = static::$file->open_file('r+')
-                    ->get_memory();
-                static::$query_result = static::execute_update($sql_statement);
-                static::$file->write_file(static::$data)
-                    ->close_file();
-                break;
+                    static::$query_result = static::execute_select($sql_statement);
+                    static::$file->close_file();
+                    break;
 
-            default:
-                DatabaseError::trigger("Executing '$command'-queries is not implemented.");
+                case 'UPDATE':
+                    static::$data = static::$file->open_file('r+')
+                        ->get_memory();
+                    static::$query_result = static::execute_update($sql_statement);
+                    static::$file->write_file(static::$data)
+                        ->close_file();
+                    break;
+
+                default:
+                    Error::trigger("Executing '$command'-queries is not implemented.");
+            }
+        }
+        catch (\Error $e)
+        {
+            static::$file->close_file();
+            throw new Error("Can not execute query: " . $e->getMessage());
         }
         return (bool) static::$query_result;
     }
@@ -245,7 +293,8 @@ class FileDatabase extends Database
      */
     private static function get_file(): FileHandle
     {
-        if (!isset(self::$file)) {
+        if (!isset(self::$file))
+        {
             self::initalize();
         }
         return self::$file;

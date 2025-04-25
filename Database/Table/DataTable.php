@@ -30,11 +30,53 @@ abstract class DataTable
     private static ?DataTable $instance = null;
 
     /**
+     * @var string
+     */
+    protected static string $primary_key;
+
+    /**
      * The name of the database table.
      *
      * @var string
      */
     public string $name;
+
+    public function display(): void
+    {
+        $table = static::get_instance($this->name)->select()->get(false);
+        $header = array_keys($table[0]);
+        array_unshift($table, $header);
+        // find the longest element in each column
+        foreach ($table as $row) {
+            $column_index = 0;
+            $longest_element_in_column = [];
+            foreach ($row as $column_name => $cell) {
+                if (!isset($longest_element_in_column[$column_index])) {
+                    $longest_element_in_column[$column_index] = strlen((string) $cell);
+                }
+                if ($longest_element_in_column[$column_index] < strlen((string) $cell)) {
+                    $longest_element_in_column[$column_index] = strlen((string) $cell);
+                }
+            }
+            $column_index++;
+        }
+        //display
+        foreach ($table as $row) {
+            $column_index = 0;
+            foreach ($row as $column_name => $cell) {
+                echo str_pad((string)$cell, $longest_element_in_column[$column_index]), " ." . " ";
+            }
+            echo "\n";
+            $column_index++;
+        }
+    }
+
+    /**
+     * Returns the column name of the primary key.
+     *
+     * @return string Primary Key of this table.
+     */
+    abstract public function get_primary_key(): string;
 
     /**
      * Returns the count of rows in the table.
@@ -62,9 +104,10 @@ abstract class DataTable
      */
     public function delete_row(int $id): bool
     {
+        $pimary_key = static::get_primary_key();
         $this
             ->delete()
-            ->where_equals('id', $id)
+            ->where_equals($pimary_key, $id)
             ->execute();
         return (bool) Database::get_query_result();
     }
@@ -128,9 +171,10 @@ abstract class DataTable
      */
     public function select_row(int $id): array
     {
+        $pimary_key = static::get_primary_key();
         $this
             ->select()
-            ->where_equals('id', $id)
+            ->where_equals($pimary_key, $id)
             ->execute();
         return Database::get_query_result()[0];
     }
@@ -166,13 +210,17 @@ abstract class DataTable
      */
     public function update_row(int $id, array $cells): array
     {
+        $pimary_key = static::get_primary_key();
         $update = $this->update()
-            ->where_equals('id', $id);
+            ->where_equals($pimary_key, $id);
         foreach ($cells as $column_name => $value) {
             $update->set($column_name, $value);
         }
         $update->execute();
-        return Database::get_query_result();
+        if (Database::get_query_result()) {
+            return $cells;
+        }
+        return [];
     }
 
 

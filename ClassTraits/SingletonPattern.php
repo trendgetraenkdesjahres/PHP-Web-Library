@@ -27,9 +27,20 @@ trait SingletonPattern
      */
     final protected static function init_singleton(): void
     {
-        if (!isset(self::$singleton_instance)) {
+        if (!isset(self::$singleton_instance))
+        {
             self::$singleton_instance = new self();
         }
+    }
+
+    /**
+     * Gets the singleton instance.
+     * @return static
+     */
+    final protected static function get_singleton(): static
+    {
+        static::init_singleton();
+        return self::$singleton_instance;
     }
 
     /**

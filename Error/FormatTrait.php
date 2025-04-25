@@ -4,6 +4,47 @@ namespace PHP_Library\Error;
 
 trait FormatTrait
 {
+
+    public static function get_emoji(int|Error|\Error $errno): string
+    {
+        if ($errno instanceof Error)
+        {
+            return isset($errno::$emoji) ? $errno::$emoji : '⚡';
+        }
+        if ($errno instanceof \Error)
+        {
+            return '⚠️';
+        }
+        switch ($errno)
+        {
+            case E_ERROR:
+                return "💥"; // Critical error
+            case E_WARNING:
+                return "⚠️"; // Warning
+            case E_PARSE:
+                return "🛑"; // Parse error (syntax error)
+            case E_NOTICE:
+                return "ℹ️"; // Notice (info message)
+            case E_CORE_ERROR:
+                return "🔥"; // Core error (serious issue)
+            case E_CORE_WARNING:
+                return "⚠️"; // Core warning
+            case E_COMPILE_ERROR:
+                return "💻❌"; // Compile-time error
+            case E_COMPILE_WARNING:
+                return "💻⚠️"; // Compile-time warning
+            case E_USER_ERROR:
+                return "🚨"; // User-defined error
+            case E_USER_WARNING:
+                return "⚠️"; // User-defined warning
+            case E_USER_NOTICE:
+                return "👤ℹ️"; // User-defined notice
+            case E_RECOVERABLE_ERROR:
+                return "🩹"; // Recoverable error
+            default:
+                return "❓"; // Unknown error
+        }
+    }
     public function __toString(): string
     {
         return self::format_message($this->message);
@@ -32,16 +73,23 @@ trait FormatTrait
         ));
         $function_name = '';
         $open_brackets = 0;
-        foreach ($trace as $caller) {
-            if (isset($caller['type'])) {
-                if (is_subclass_of(get_called_class(), $caller['class']) || get_called_class() === __CLASS__) {
+        foreach ($trace as $caller)
+        {
+            if (isset($caller['type']))
+            {
+                if (is_subclass_of(get_called_class(), $caller['class']) || get_called_class() === __CLASS__)
+                {
                     continue;
                 }
                 $open_brackets++;
                 $function_name .= $caller['class'] . $caller['type'] . $caller['function'] . "(";
-            } elseif (!$caller) {
+            }
+            elseif (!$caller)
+            {
                 $function_name .= '> ';
-            } else {
+            }
+            else
+            {
                 $open_brackets++;
                 $function_name .= $caller['function'] . "(";
             }

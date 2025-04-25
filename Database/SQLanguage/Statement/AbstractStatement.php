@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Database\SQLanguage\Statement;
 
+use PHP_Library\Database\SQLanguage\Error\SQLanguageError as Error;
 use PHP_Library\Database\Database;
 use PHP_Library\Database\SQLanguage\SyntaxCheck;
 
@@ -46,12 +47,21 @@ abstract class AbstractStatement implements \Stringable
      * Executes the statement on the current database connection.
      *
      * To retrieve results, use `Database::get_query_result()`.
-     *
+     * @param bool $ignore_error Ignore SQL or Database errors
      * @return bool True if the execution was successful; otherwise, false.
      */
-    public function execute(): bool
+    public function execute(bool $ignore_error = false): bool
     {
-        return Database::query($this);
+        try {
+            $result = Database::query($this);
+            return $result;
+        } catch (\Throwable $e) {
+            if ($ignore_error) {
+                return false;
+            }
+            $query = (string) $this;
+            throw new Error("Could not execute '{$query}': $e");
+        }
     }
 
     /**

@@ -5,6 +5,7 @@ namespace PHP_Library\Router\HTMLResponse;
 use PHP_Library\Error\Error;
 use PHP_Library\Router\Router;
 use PHP_Library\Superglobals\Get;
+use PHP_Library\Superglobals\Server;
 
 class HTMLDoc
 {
@@ -25,7 +26,8 @@ class HTMLDoc
         $template_file = static::get_matching_templatefile();
         include $template_file;
         $html_doc = ob_get_clean();
-        if ($endpoint_title = Router::$current_endpoint->get_title()) {
+        if ($endpoint_title = Router::$current_endpoint->get_title())
+        {
             static::$overwrite_content['head']['title'] = $endpoint_title;
         }
         $html_doc = static::overwrite_singular_tag($html_doc, 'title');
@@ -45,7 +47,8 @@ class HTMLDoc
      */
     public static function set_template_file(string $path, string $preg_pattern = '/.*/'): void
     {
-        if (!str_starts_with($path, '/')) {
+        if (!str_starts_with($path, '/'))
+        {
             $path = $_SERVER['DOCUMENT_ROOT'] . "/{$path}";
         }
 
@@ -63,7 +66,8 @@ class HTMLDoc
 
     public static function add_style(string $css): void
     {
-        if (!isset(static::$overwrite_content['head']['style'])) {
+        if (!isset(static::$overwrite_content['head']['style']))
+        {
             static::$overwrite_content['head']['style'] = [];
         }
         array_push(static::$overwrite_content['head']['style'], $css);
@@ -71,7 +75,8 @@ class HTMLDoc
 
     public static function add_script(string $js): void
     {
-        if (!isset(static::$overwrite_content['head']['script'])) {
+        if (!isset(static::$overwrite_content['head']['script']))
+        {
             static::$overwrite_content['head']['script'] = [];
         }
         array_push(static::$overwrite_content['head']['script'], $js);
@@ -85,7 +90,8 @@ class HTMLDoc
 
     public static function add_meta(array $attributes): void
     {
-        if (!isset(static::$overwrite_content['head']['meta'])) {
+        if (!isset(static::$overwrite_content['head']['meta']))
+        {
             static::$overwrite_content['head']['meta'] = [];
         }
         array_push(static::$overwrite_content['head']['meta'], $attributes);
@@ -93,7 +99,8 @@ class HTMLDoc
 
     public static function add_link(array $attributes): void
     {
-        if (!isset(static::$overwrite_content['head']['link'])) {
+        if (!isset(static::$overwrite_content['head']['link']))
+        {
             static::$overwrite_content['head']['link'] = [];
         }
         array_push(static::$overwrite_content['head']['link'], $attributes);
@@ -101,14 +108,19 @@ class HTMLDoc
 
     protected static function append_repetitive_tag(string $html_doc, string $tag_name): string
     {
-        if (! isset(static::$overwrite_content['head'][$tag_name])) {
+        if (! isset(static::$overwrite_content['head'][$tag_name]))
+        {
             return $html_doc;
         }
         $new_tags = '';
-        foreach (static::$overwrite_content['head'][$tag_name] as $key => $content) {
-            if (is_array($content)) {
+        foreach (static::$overwrite_content['head'][$tag_name] as $key => $content)
+        {
+            if (is_array($content))
+            {
                 $new_tags .= static::create_singular_tag($tag_name, $content) . PHP_EOL;
-            } else {
+            }
+            else
+            {
                 $new_tags .= "<{$tag_name}>{$content}</{$tag_name}>" . PHP_EOL;
             }
         }
@@ -116,7 +128,8 @@ class HTMLDoc
         if (
             preg_match_all('/<' . $tag_name . '.*?<\/' . $tag_name . '>/', $html_doc, $current_tags)
             || preg_match_all('/<' . $tag_name . '.*?>/', $html_doc, $current_tags)
-        ) {
+        )
+        {
             $last_tag = end($current_tags[0]);
             return str_replace(
                 $last_tag,
@@ -133,7 +146,8 @@ class HTMLDoc
 
     protected static function overwrite_singular_tag(string $html_doc, string $tag_name): string
     {
-        if (! isset(static::$overwrite_content['head'][$tag_name])) {
+        if (! isset(static::$overwrite_content['head'][$tag_name]))
+        {
             return $html_doc;
         }
         return preg_replace(
@@ -147,13 +161,19 @@ class HTMLDoc
     {
         // new attributes
         $opening_tag = "<{$tag_name}";
-        if (! is_null($attributes)) {
-            foreach ($attributes as $key => $value) {
+        if (! is_null($attributes))
+        {
+            foreach ($attributes as $key => $value)
+            {
                 $opening_tag .= " {$key}=\"{$value}\"";
             }
-        } else {
-            if (is_array(static::$overwrite_content['head'][$tag_name])) {
-                foreach (static::$overwrite_content['head'][$tag_name] as $key => $value) {
+        }
+        else
+        {
+            if (is_array(static::$overwrite_content['head'][$tag_name]))
+            {
+                foreach (static::$overwrite_content['head'][$tag_name] as $key => $value)
+                {
                     $opening_tag .= " {$key}=\"{$value}\"";
                 }
             }
@@ -161,7 +181,8 @@ class HTMLDoc
 
         $tag = $opening_tag . '>';
         // new content
-        if (is_string(static::$overwrite_content['head'][$tag_name])) {
+        if (is_string(static::$overwrite_content['head'][$tag_name]))
+        {
             $tag .= htmlspecialchars(static::$overwrite_content['head'][$tag_name]) . "</{$tag_name}>";
         }
         return $tag;
@@ -169,15 +190,19 @@ class HTMLDoc
 
     public static function get_matching_templatefile(): string
     {
-        if (empty(static::$template_files)) {
+        if (empty(static::$template_files))
+        {
             return static::$default_template_file;
         }
         $path = Get::get_path();
-        foreach (static::$template_files as $template_file) {
-            if (false === preg_match($template_file['preg_pattern'], $path, $matches)) {
+        foreach (static::$template_files as $template_file)
+        {
+            if (false === preg_match($template_file['preg_pattern'], $path, $matches))
+            {
                 throw new Error("Invalid preg pattern: '{$template_file['preg_pattern']}'");
             }
-            if ($matches) {
+            if ($matches)
+            {
                 return $template_file['file'];
             }
         }

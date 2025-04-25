@@ -19,14 +19,16 @@ class FileHandle
     {
         $this->path = file_exists($path) ? realpath($path) : $path;
         $this->name = pathinfo($path, PATHINFO_BASENAME);
-        if ($this->use_lock_file = $use_lock_file) {
+        if ($this->use_lock_file = $use_lock_file)
+        {
             $this->lock_file_path = $this->path . '.lock';
         }
     }
 
     public function __destruct()
     {
-        if ($this->file_handle) {
+        if ($this->file_handle)
+        {
             $this->close_file();
         }
     }
@@ -38,24 +40,30 @@ class FileHandle
 
     public function open_file(string $fopen_mode = 'r', bool $load_file = true, int $microseconds_freq = 100, int $timeout_seconds = 1): FileHandle
     {
-        if ($this->use_lock_file) {
-            if (!is_writable($this->path)) {
+        if ($this->use_lock_file)
+        {
+            if (!is_writable($this->path))
+            {
                 throw new \Error("Can't write to '{$this->path} as '" . posix_getpwuid(posix_geteuid())['name'] . "'");
             }
             $start_time = microtime(true);
-            while (!@mkdir($this->lock_file_path)) {
+            while (!@mkdir($this->lock_file_path))
+            {
                 usleep($microseconds_freq);
                 // Check if the time limit has been exceeded
-                if ((microtime(true) - $start_time) >= $timeout_seconds) {
+                if ((microtime(true) - $start_time) >= $timeout_seconds)
+                {
                     throw new \Error("Timeout exceeded: File was locked from different process for more than {$timeout_seconds} seconds.");
                 }
             }
         }
-        if (!$this->file_handle = fopen($this->path, $fopen_mode)) {
+        if (!$this->file_handle = fopen($this->path, $fopen_mode))
+        {
             Warning::trigger("Could not fopen(filename: '{$this->path}', mode: '$fopen_mode').");
             $this->close_file();
         }
-        if ($load_file) {
+        if ($load_file)
+        {
             $this->memory = unserialize(
                 data: stream_get_contents($this->file_handle),
                 options: []
@@ -66,10 +74,12 @@ class FileHandle
 
     public function close_file(): FileHandle
     {
-        if (get_resource_type($this->file_handle) == 'stream') {
+        if (get_resource_type($this->file_handle) == 'stream')
+        {
             fclose($this->file_handle);
         }
-        if ($this->use_lock_file) {
+        if ($this->use_lock_file)
+        {
             @rmdir($this->lock_file_path);
         }
         return $this;
@@ -79,7 +89,8 @@ class FileHandle
     {
         rewind($this->file_handle);
         ftruncate($this->file_handle, 0);
-        if (!fwrite($this->file_handle, serialize($data))) {
+        if (!fwrite($this->file_handle, serialize($data)))
+        {
             $type = get_resource_type($this->file_handle);
             Warning::trigger("Could not fwrite($type, \$data).");
         }
@@ -89,12 +100,16 @@ class FileHandle
 
     public function create_file(bool $force = false): FileHandle
     {
-        if ($force) {
+        if ($force)
+        {
             $stream = fopen($this->path, 'w');
-        } else {
+        }
+        else
+        {
             $stream = @fopen($this->path, 'x');
         }
-        if ($stream) {
+        if ($stream)
+        {
             fclose($stream);
         }
         return $this;

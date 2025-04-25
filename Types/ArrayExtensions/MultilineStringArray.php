@@ -11,9 +11,10 @@ class MultilineStringArray extends ArrayType
     public function __construct(string|StringType $multiline_string)
     {
         $array_of_strings = ArrayType::explode($multiline_string, PHP_EOL);
-        $this->value = $array_of_strings->walk(function ($value) {
+        $this->value = $array_of_strings->walk(function ($value)
+        {
             $value = new StringType($value);
-        })->get_built_in_type();
+        })->get_value();
     }
 
     /**
@@ -23,7 +24,8 @@ class MultilineStringArray extends ArrayType
      */
     public function get_longest_line(): StringType
     {
-        return ArrayType::usort($this->value, function (StringType $a, StringType $b) {
+        return ArrayType::usort($this->value, function (StringType $a, StringType $b)
+        {
             return $a->get_length() <=> $b->get_length();
         })->get_first_element();
     }
@@ -51,7 +53,8 @@ class MultilineStringArray extends ArrayType
      */
     public function padding_left(int $padding = 1, int $top_offset = 0): static
     {
-        return $this->walk(function (StringType $string, int $line) use ($padding, $top_offset) {
+        return $this->walk(function (StringType $string, int $line) use ($padding, $top_offset)
+        {
             if ($line > $top_offset) $string->pad_left($padding);
         });
     }
@@ -66,7 +69,8 @@ class MultilineStringArray extends ArrayType
      */
     public function padding_right(int $padding = 1, int $top_offset = 0): static
     {
-        return $this->walk(function (StringType $string, int $line) use ($padding, $top_offset) {
+        return $this->walk(function (StringType $string, int $line) use ($padding, $top_offset)
+        {
             if ($line > $top_offset) $string->pad_left($padding);
         });
     }

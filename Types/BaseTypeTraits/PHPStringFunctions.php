@@ -257,7 +257,7 @@ trait PHPStringFunctions
      * @param int &$count If passed, this will be set to the number of replacements performed.
      * @return static This string  with the replaced values.
      */
-    final public function replace_substring(array|string $substring, array|string $replacement, bool $case_sensetive = true, int &$count): static
+    final public function replace_substring(array|string $substring, array|string $replacement, bool $case_sensetive = true, int &$count = 0): static
     {
         if ($case_sensetive) {
             $this->value = str_replace($substring, $replacement, $this->value, $count);
@@ -278,7 +278,7 @@ trait PHPStringFunctions
      * @param int &$count If passed, this will be set to the number of replacements performed.
      * @return static A string  with the replaced values.
      */
-    final public static function replace(string $haystack, array|string $needle, array|string $replacement, bool $case_sensetive = true,  &$count): static
+    final public static function replace(string $haystack, array|string $needle, array|string $replacement, bool $case_sensetive = true,  &$count = 0): static
     {
         if ($case_sensetive) {
             return new self(str_replace($needle, $replacement, $haystack, $count));

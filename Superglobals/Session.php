@@ -2,38 +2,113 @@
 
 namespace PHP_Library\Superglobals;
 
+use PHP_Library\DatabaseModel\DatabaseModel;
+use PHP_Library\DatabaseModel\UserModel;
 use PHP_Library\Error\Warning;
-use PHP_Library\Superglobals\Error\SessionError;
 
 /**
  * Session is started by most of the methods. It must be started prior the first output. Use `Session::start()`, if the first other method is called within output.
  */
-class Session
+class Session extends DatabaseModel
 {
-    public static string $name;
-    public static ?string $id = null;
+    /** object in db id */
+    public int $id;
 
-    public static function start(?string $name = null): bool
+    public string $session_id;
+    public string $start_time;
+    public string $ip_address;
+    public string $user_agent;
+    public ?int $user_id = null;
+
+    private function __construct()
     {
-        if ($name) {
-            session_name($name);
+        if (!static::is_active()) {
+            throw new \Error("No Session active.");
         }
-        if (!session_start()) {
+        $this->session_id = static::get_id();
+        $this->start_time = static::get_field('_invoked_at');
+        $this->user_id = (int) static::get_field('_user_id') ?? null;
+        $this->ip_address = Server::get_remote_ip() ?? '';
+        $this->user_agent = Server::get_http_user_agent() ?? '';
+    }
+
+    public static function get_current(): static
+    {
+        return new static();
+    }
+
+    /**
+     * Starts the session if it's not already active.
+     *
+     * @param array $options Optional session configuration.
+     * @return bool Returns true if session started successfully.
+     */
+    public static function start(array $options = []): bool
+    {
+        if (static::is_active()) {
             return false;
         }
-        static::$name = session_name();
-        static::$id = session_id();
+        if (!session_start($options)) {
+            return false;
+        }
+        static::set_field('_invoked_at', time());
+        static::set_field('_user_id', UserModel::is_logged_in() ? UserModel::get_current()->user_id : '');
         return true;
     }
 
+    /**
+     * Regenerates session ID.
+     *
+     * @param bool $deleteOldSession If true, deletes old session.
+     * @return bool
+     */
+    public static function regenerate(bool $deleteOldSession = false): bool
+    {
+        return session_regenerate_id($deleteOldSession);
+    }
+
+    /**
+     * Checks if a session is currently active.
+     *
+     * @return bool
+     */
+    public static function is_active(): bool
+    {
+        return session_status() === PHP_SESSION_ACTIVE;
+    }
+
+    /**
+     * Checks if a session key exists.
+     *
+     * @param string $key
+     * @return bool
+     */
     public static function has_field(string $key): bool
     {
-        static::populate_session_array();
+        static::start();
         return isset($_SESSION[$key]);
     }
 
-    public static function get(string $key): mixed
+    /**
+     * Retrieves  the session ID.
+     *
+     * @return string
+     */
+    public static function get_id(): string
     {
+        static::start();
+        return session_id();
+    }
+
+    /**
+     * Retrieves a session value or the session ID.
+     *
+     * @param string|null $key If null, returns session ID.
+     * @return mixed|null
+     */
+    public static function get_field(string $key): mixed
+    {
+        static::start();
         if (!static::has_field($key)) {
             Warning::trigger("Undefined Session Field '{$key}'");
             return null;
@@ -41,46 +116,57 @@ class Session
         return $_SESSION[$key];
     }
 
-    public static function set(string $key, mixed $value): void
+    /**
+     * Sets a session variable.
+     *
+     * @param string $key
+     * @param mixed $value
+     */
+    public static function set_field(string $key, mixed $value): void
     {
-        static::populate_session_array();
+        static::start();
         $_SESSION[$key] = $value;
     }
 
     /**
-     * without args, the whole session will be cleared on the server!!
-     * @param null|string $key
-     * @param null|string ...$keys
+     * Unsets a session variable or clears session data.
+     *
+     * @param string $key
+     * @param string ...$keys Additional keys to unset.
      * @return bool
-     * @throws SessionError
      */
-    public static function unset(?string $key = null, ?string ...$keys): bool
+    public static function unset_field(string $key, ?string ...$keys): bool
     {
-        static::populate_session_array();
-        if (is_null($key) && !empty($keys)) {
-            throw new SessionError("When unsetting the whole session, just `Session::unset(null)`.");
-        }
-        if (is_null($key)) {
-            return session_unset();
-        }
-        $keys = array_merge([$key], $keys);
-        foreach ($keys as $keys) {
-            unset($_SESSION[$keys]);
+        foreach (array_merge([$key], $keys) as $k) {
+            unset($_SESSION[$k]);
         }
         return true;
     }
 
+    /**
+     * Destroys the session completely.
+     *
+     * @return bool
+     */
     public static function destroy(): bool
     {
-        if (is_null(static::$name)) {
-            throw new SessionError("Session not started.");
-        }
-        if (!session_destroy()) {
+        if (! session_unset()) {
             return false;
         }
+        if (! session_destroy()) {
+            return false;
+        }
+        if (! static::request_session_deletion()) {
+            return false;
+        }
+        return true;
+    }
+
+    protected static function request_session_deletion(): bool
+    {
         $params = session_get_cookie_params();
         return setcookie(
-            static::$name,
+            session_name(),
             '',
             time() - 42000,
             $params["path"],
@@ -88,13 +174,5 @@ class Session
             $params["secure"],
             $params["httponly"]
         );
-    }
-
-    protected static function populate_session_array(): bool
-    {
-        if (is_null(static::$id)) {
-            return static::start();
-        }
-        return true;
     }
 }

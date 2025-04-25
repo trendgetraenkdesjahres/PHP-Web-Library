@@ -33,9 +33,7 @@ class ProgramHandle implements ProgramHandleInterface
     public ?int $result_code = null;
     protected ?ProgramHandle $pipe_to = null;
 
-    public function __construct(public ?string $command = null)
-    {
-    }
+    public function __construct(public ?string $command = null) {}
 
     /**
      * Set the source file(s) based on a glob pattern and an input flag.
@@ -221,7 +219,7 @@ class ProgramHandle implements ProgramHandleInterface
     }
 
     /**
-     * Get array of registred source / input files
+     * Get array of registered source / input files
      *
      * @return string The command string.
      */

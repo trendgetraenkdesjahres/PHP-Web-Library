@@ -3,26 +3,33 @@
 namespace  PHP_Library\Types;
 
 use PHP_Library\Types\BaseTypeTraits\PHPStringFunctions;
+use PHP_Library\Types\StringRepresentation\StringTypeStringRepresentationTrait;
 
 class StringType extends AbstractType implements \Stringable
 {
     use PHPStringFunctions;
 
-    protected string $encoding = 'UTF-8';
+    use StringTypeStringRepresentationTrait;
 
-    public function __construct(protected mixed $value = '')
+    protected static function get_php_type(): string
     {
-        $this->value = $value;
+        return 'string';
     }
+    protected static function validate_type($value): bool
+    {
+        return  in_array(gettype($value), ['string', 'float', 'integer', 'double']);
+    }
+
+    protected string $encoding = 'UTF-8';
 
     /**
      * Convert the string to a plain string.
      *
      * @return string
      */
-    public function __toString(): string
+    protected function to_string(): string
     {
-        return (string) $this->value;
+        return $this->value;
     }
 
     /**
@@ -67,7 +74,7 @@ class StringType extends AbstractType implements \Stringable
      *
      * @return static
      */
-    public function remove_substring(string|array $substring, bool $case_sensetive = true, int &$count): static
+    public function remove_substring(string|array $substring, bool $case_sensetive = true, int &$count = 0): static
     {
         return $this->replace_substring($substring, '', $case_sensetive, $count);
     }
@@ -81,7 +88,8 @@ class StringType extends AbstractType implements \Stringable
      */
     public function remove_beginning_substring(string $substring): static
     {
-        if ($this->has_beginning($substring)) {
+        if ($this->has_beginning($substring))
+        {
             $this->get_substring(
                 offset: StringType::len($substring)
             );
@@ -91,7 +99,8 @@ class StringType extends AbstractType implements \Stringable
 
     final public static function make(self|string &$string): static
     {
-        if (is_string($string)) {
+        if (is_string($string))
+        {
             $string = new self($string);
         }
         return $string;

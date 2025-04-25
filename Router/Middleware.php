@@ -39,7 +39,7 @@ class Middleware
             return false;
         }
         if ($username) {
-            return $username === Session::get('username');
+            return $username === Session::get_field('username');
         }
         return true;
     }

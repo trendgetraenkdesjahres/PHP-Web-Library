@@ -3,6 +3,7 @@
 namespace  PHP_Library\Types;
 
 use PHP_Library\Types\BaseTypeTraits\PHPArrayFunctions;
+use PHP_Library\Types\StringRepresentation\ArrayTypeStringRepresentationTrait;
 
 /**
  * ArrayType represents a class for handling array values.
@@ -12,19 +13,18 @@ use PHP_Library\Types\BaseTypeTraits\PHPArrayFunctions;
 class ArrayType extends AbstractType implements \Iterator, \ArrayAccess, \Countable
 {
     use PHPArrayFunctions;
+    use ArrayTypeStringRepresentationTrait;
+
+
     /**
      * Constructor to initialize the ArrayType with a given array value.
      *
      * @param mixed $value The initial array value.
      */
-    public function __construct(mixed ...$value)
-    {
-        if (count($value) === 1 && key_exists(0, $value) && is_array($value[0])) {
 
-            $this->value = $value[0];
-        } else {
-            $this->value = $value;
-        }
+    protected static function get_php_type(): string
+    {
+        return 'array';
     }
 
     public function offsetExists($offset): bool
@@ -44,9 +44,12 @@ class ArrayType extends AbstractType implements \Iterator, \ArrayAccess, \Counta
 
     public function offsetSet(mixed $offset, mixed $value): void
     {
-        if (is_null($offset)) {
+        if (is_null($offset))
+        {
             $this->value[] = $value;
-        } else {
+        }
+        else
+        {
             $this->value[$offset] = $value;
         }
     }
@@ -104,62 +107,23 @@ class ArrayType extends AbstractType implements \Iterator, \ArrayAccess, \Counta
         return $this;
     }
 
+    protected function get_key_cells(): array
+    {
+        $keys = $this->get_keys();
+        array_walk($keys, function ($key, $value)
+        {
+            return $value . " ";
+        });
+        return $keys;
+    }
+
     /**
      * Convert the array to its string representation with formatting.
      *
      * @return string The formatted string representation of the array.
      */
-    public function __toString(): string
+    protected function to_string(): string
     {
-        /* title */
-        $title = new StringType("Array(" . count($this->value) . ")");
-        if (count($this->value) === 0) {
-            return $title;
-        }
-
-        /* keys formatieren und laenge vom laengsten key suchen */
-        $longest_key_string_length = 0;
-        foreach ($this->value as $key => $value) {
-            $key = new StringType($key);
-            if ($key->is('string')) {
-                $key->surround("'");
-            }
-            if (($length = $key->get_length()) > $longest_key_string_length) {
-                $longest_key_string_length = $length;
-            }
-        }
-
-        $string = new StringType();
-        foreach ($this->value as $key => $value) {
-            $seperator = new StringType("\xE2\x95\x90");
-            $key = new StringType($key);
-            if ($key->is('string')) {
-                $key->surround("'");
-            }
-            $seperator->repeat(
-                ($longest_key_string_length + 1)
-                    - $key->get_length()
-            );
-            if (is_object($value) && get_class($value) === 'Closure') {
-                $string->append("$key $seperator> Closure" . PHP_EOL);
-            } else {
-                $value = new StringType((string) AbstractType::construct($value));
-                if (is_string($value->value)) {
-                    $value = new StringType((string)$value);
-                    $string_length = $value->get_length();
-                    $value->replace(PHP_EOL, '¶' . PHP_EOL)->word_wrap(80)->surround('`')->append("($string_length)");
-                } else {
-                    $value = new StringType((string) $value);
-                }
-                if ($value->has_linebreak()) {
-                    $value->padding_left($longest_key_string_length + 1, 1);
-                }
-                $string->append_line("$key $seperator> $value");
-            }
-        }
-        if (isset($GLOBALS["DEBUG_PRINT"])) {
-            $string->box_around_string(1, $title);
-        }
-        return $string;
+        return 'array';
     }
 }

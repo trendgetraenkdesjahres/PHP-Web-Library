@@ -7,6 +7,7 @@ use PHP_Library\Router\EndpointTypes\Callback;
 use PHP_Library\Router\EndpointTypes\PHPFile;
 use PHP_Library\Router\EndpointTypes\Redirect;
 use PHP_Library\Router\EndpointTypes\TextFile;
+use PHP_Library\Superglobals\Server;
 use Stringable;
 
 abstract class Endpoint implements Stringable
@@ -75,10 +76,12 @@ abstract class Endpoint implements Stringable
 
     public function get_link(?string $text = null): Element
     {
-        if ($text) {
+        if ($text)
+        {
             return new Element('a', ['href' => $this->path], $text);
         }
-        if (isset($this->title)) {
+        if (isset($this->title))
+        {
             return new Element('a', ['href' => $this->path], $this->title);
         }
         return new Element('a', ['href' => $this->path], '@');
@@ -109,8 +112,13 @@ abstract class Endpoint implements Stringable
 
     protected static function get_abs_path(string $path): string
     {
-        if (! str_starts_with('/', $path)) {
-            return $_SERVER['DOCUMENT_ROOT'] . "/{$path}";
+        if (! Server::is_serving_http())
+        {
+            return $path;
+        }
+        if (! str_starts_with('/', $path))
+        {
+            return Server::get_document_root() .  "/{$path}";
         }
         return $path;
     }

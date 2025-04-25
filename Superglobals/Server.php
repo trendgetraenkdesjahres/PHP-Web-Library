@@ -36,9 +36,15 @@ class Server
      */
     public static function get_url_to_file(string $path): string
     {
+        if (! self::is_serving_http())
+        {
+            return '';
+        }
         // Absolute path
-        if (str_starts_with($path, '/')) {
-            if (!str_starts_with($path, self::get_document_root())) {
+        if (str_starts_with($path, '/'))
+        {
+            if (!str_starts_with($path, self::get_document_root()))
+            {
                 throw new \Error("'$path' is out of scope for this script.");
             }
             $path = substr($path, strlen(self::get_document_root()));
@@ -66,7 +72,8 @@ class Server
      */
     public static function get_root_url(): string
     {
-        if (! self::is_serving_http()) {
+        if (! self::is_serving_http())
+        {
             return throw new \Error('This Script is not Serving. There is no URL');
         }
         $port = self::get_port();
@@ -75,13 +82,17 @@ class Server
             ($_SERVER['HTTPS'] == 'on' || $_SERVER['HTTPS'] == 1) ||
             isset($_SERVER['HTTP_X_FORWARDED_PROTO']) &&
             $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https'
-        ) {
+        )
+        {
             $protocol = 'https://';
-        } else {
+        }
+        else
+        {
             $protocol = 'http://';
         }
 
-        if (!$port) {
+        if (!$port)
+        {
             return $protocol .  self::get_server_name();
         }
         return $protocol .  self::get_server_name() . ":$port";

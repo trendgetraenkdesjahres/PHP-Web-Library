@@ -2,38 +2,38 @@
 
 namespace  PHP_Library\Types;
 
+use PHP_Library\Error\Error;
+use TypeError;
+
 abstract class AbstractType
 {
 
     protected $value;
 
-    /**
-     * Constructor for TypeWrap.
-     *
-     * @param mixed $value The value to wrap with a custom type.
-     */
-    abstract public function __construct($value);
+    abstract public function get_string_representation(bool $format_output = false, ?int $max_width = null): string;
+    abstract protected function to_string(): string;
+    abstract protected static function get_php_type(): string;
+    abstract protected static function get_type_class_short_name(): string;
+
+
 
     /**
-     * Convert the custom type to a string representation.
+     * Constructor for Type Objects.
      *
-     * @return string
+     * @param $value The value of this.
      */
-    public function __toString(): string
+    final public function __construct($value)
     {
-        return var_export($this->value);
+        if (! static::validate_type($value))
+        {
+            throw new TypeError("Value ({$value}) is not a " . static::get_type_class_short_name() . ".");
+        }
+        $this->value = $value;
     }
-
-    /**
-     * Get the type of the custom type.
-     *
-     * @return string
-     */
-    public function get_type(): string
+    final public function __toString(): string
     {
-        return ($type = gettype($this->value)) === 'object' ? get_class($this->value) : $type;
+        return $this->to_string();
     }
-
     /**
      * Check if the custom type is of a specific type or class.
      *
@@ -42,7 +42,7 @@ abstract class AbstractType
      */
     public function is(string $type_or_class): bool
     {
-        return ($type_or_class == $this->get_type());
+        return ($type_or_class == static::get_php_type());
     }
 
     /**
@@ -55,13 +55,43 @@ abstract class AbstractType
         return empty($this->value);
     }
 
-    public function get_built_in_type(): mixed
+    public function get_value(): mixed
     {
         return $this->value;
     }
 
-    public static function convert(mixed &$mixed): static
+
+    final static public function create_implementation(mixed $value): static
     {
-        return $mixed = new static($mixed);
+        if ($value === UninitializedType::SYMBOL)
+        {
+            return new UninitializedType(false);
+        }
+        switch (gettype($value))
+        {
+            case 'boolean':
+                return new BooleanType($value);
+            case 'integer':
+                return new IntegerType($value);
+            case 'float':
+            case 'double':
+                return new FloatType($value);
+            case 'string':
+                return new StringType($value);
+            case 'array':
+                return new ArrayType($value);
+            case 'object':
+                return new ObjectType($value);
+            case 'null':
+            case 'NULL':
+                return new NullType($value);
+            default:
+                throw new Error(gettype($value) . "???");
+        }
+    }
+
+    protected static function validate_type($value): bool
+    {
+        return  gettype($value) == static::get_php_type();
     }
 }

@@ -3,7 +3,7 @@
 namespace PHP_Library\Database\SQLanguage\Statement;
 
 use PHP_Library\Database\Database;
-use PHP_Library\Database\SQLanguage\Error\SQLanguageError;
+use PHP_Library\Database\SQLanguage\Error\SQLanguageError as Error;
 
 /**
  * Class Select
@@ -77,7 +77,7 @@ class Select extends AbstractStatement
     public function __toString(): string
     {
         if (!$this->where_clause_completed) {
-            throw new SQLanguageError("Statement is not completed.");
+            throw new Error("Statement is not completed.");
         }
         return "SELECT {$this->columns_string} FROM {$this->table} {$this->get_where_clause()} {$this->limit};";
     }

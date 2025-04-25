@@ -2,6 +2,7 @@
 
 namespace PHP_Library\Superglobals;
 
+use PHP_Library\DatabaseModel\DatabaseModel;
 use PHP_Library\Error\Warning;
 use PHP_Library\Superglobals\PHPTraits\RequestTrait;
 
@@ -13,19 +14,17 @@ class Post
 
     public static function has_content_type(string $name): bool
     {
-        return $_SERVER['CONTENT_TYPE'] === $name;
+        return static::get_content_type() === $name;
     }
 
-    public static function get_content_type(): string
+    public static function get_content_type(): string|false
     {
-        return $_SERVER['CONTENT_TYPE'];
+        return isset($_SERVER['CONTENT_TYPE']) ? $_SERVER['CONTENT_TYPE'] : false;
     }
 
     public static function get_content_field(string $key): mixed
     {
-        if (! isset(static::$content)) {
-            static::set_content();
-        }
+        static::set_content();
         if (!isset(static::$content[$key])) {
             Warning::trigger("Undefined Post Field '{$key}'");
             return null;

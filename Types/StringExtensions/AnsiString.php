@@ -1,6 +1,6 @@
 <?php
 
-namespace PHP_Library\Types\StringExtension;
+namespace PHP_Library\Types\StringExtensions;
 
 use PHP_Library\Types\StringType;
 
@@ -20,7 +20,7 @@ class AnsiString extends StringType
      *
      * @return StringType
      */
-    public function remove_null_characters(): StringType
+    public function remove_null_characters(): static
     {
         $this->value = str_replace("\x00", '', $this->value);
         return $this;
@@ -32,9 +32,9 @@ class AnsiString extends StringType
      * @param int $padding [optional] The amount of padding around the string content. Default is 4.
      * @param null|string|StringType $title [optional] The title for the box. Default is null.
      *
-     * @return StringType
+     * @return static
      */
-    public function box_around_string(int $padding = 4, null|string|StringType $title = null): StringType
+    public function box_around_string(int $padding = 4, null|string|StringType $title = null): static
     {
         $top_left = "\xe2\x95\xad";
         $top_right = "\xe2\x95\xae";
@@ -44,14 +44,17 @@ class AnsiString extends StringType
         $vertical = "\xe2\x94\x82";
 
         $longest_line_length  = $this->get_longest_line()->get_length();
-        if ($title) {
-            $title = is_string($title) ? new StringType($title) : $title;
+        if ($title)
+        {
+            $title = is_string($title) ? new static($title) : $title;
         }
 
 
-        $box_string = new StringType();
-        foreach ($this->get_lines() as $i => $line) {
-            if (!$line->is_empty()) {
+        $box_string = new static();
+        foreach ($this->get_lines() as $i => $line)
+        {
+            if (!$line->is_empty())
+            {
                 $line->prepend($vertical . str_repeat(' ', $padding));
                 $line->padding_right((1 + $padding + $longest_line_length) - $line->get_length())
                     ->append(str_repeat(' ', $padding) . $vertical);
@@ -59,15 +62,21 @@ class AnsiString extends StringType
             }
         }
 
-        if (!$title) {
+        if (!$title)
+        {
             $top_border =  $top_left . str_repeat(
                 string: $horizontal,
                 times: $longest_line_length  + ($padding * 2)
             ) . $top_right;
-        } else {
-            if (($longest_line_length  + ($padding * 2) - $title->get_length()) < 0) {
+        }
+        else
+        {
+            if (($longest_line_length  + ($padding * 2) - $title->get_length()) < 0)
+            {
                 $top_border =  $title . PHP_EOL;
-            } else {
+            }
+            else
+            {
                 $top_border =  $title . str_repeat(
                     string: $horizontal,
                     times: $longest_line_length  +  1 + ($padding * 2) - $title->get_length()
@@ -90,9 +99,9 @@ class AnsiString extends StringType
     /**
      * Apply bold ANSI formatting to the current string.
      *
-     * @return StringType
+     * @return static
      */
-    public function format_bold(): StringType
+    public function format_bold(): static
     {
 
         $this->value = "\e[1m$this->value\e(B\e[m";
@@ -102,9 +111,9 @@ class AnsiString extends StringType
     /**
      * Apply italic ANSI formatting to the current string.
      *
-     * @return StringType
+     * @return static
      */
-    public function format_italic(): StringType
+    public function format_italic(): static
     {
         $this->value = "\e[3m$this->value\e(B\e[m";
         return $this;
@@ -113,9 +122,9 @@ class AnsiString extends StringType
     /**
      * Apply underline ANSI formatting to the current string.
      *
-     * @return StringType
+     * @return static
      */
-    public function format_underline(): StringType
+    public function format_underline(): static
     {
         $this->value = "\e[4m$this->value\e(B\e[m";
         return $this;
@@ -124,9 +133,9 @@ class AnsiString extends StringType
     /**
      * Apply strikethrough ANSI formatting to the current string.
      *
-     * @return StringType
+     * @return static
      */
-    public function format_strikethrough(): StringType
+    public function format_strikethrough(): static
     {
         $this->value = "\e[9m$this->value\e(B\e[m";
         return $this;
@@ -135,9 +144,9 @@ class AnsiString extends StringType
     /**
      * Remove ANSI formatting from the current string.
      *
-     * @return StringType
+     * @return static
      */
-    public function format_remove(): StringType
+    public function format_remove(): static
     {
         $this->value = str_replace(
             [
