@@ -1,13 +1,13 @@
 <?php
 
-namespace PHP_Library\HTTPClient;
+namespace PHP_Library\HTTP\HTTPClient;
 
 use \CurlHandle;
 use PHP_Library\Error\Error;
 use PHP_Library\Error\Warning;
 use PHP_Library\Error\Notice;
 
-class HTTPClient
+class OldHTTPClient
 {
 
     /**
