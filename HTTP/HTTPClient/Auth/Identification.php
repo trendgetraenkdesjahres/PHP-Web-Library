@@ -1,7 +1,6 @@
 <?php
 namespace PHP_Library\HTTP\HTTPClient\Auth;
 
-use PHP_Library\HTTP\HTTPClient\AbstractAuth;
 
 class Identification extends AbstractAuth{
 
