@@ -1,6 +1,6 @@
 <?php
 
-namespace PHP_Library\HTTP\HTTPClient\APIClient;
+namespace PHP_Library\HTTP\HTTPClient\APIClient\Pagination;
 
 use PHP_Library\Error\Warning;
 
@@ -32,12 +32,12 @@ class OffsetPagination extends AbstractPagination
     protected function browse_forward(array $data): static
     {
         if (is_null($this->offset_field)) {
-            $flat = $this->get_flattened_data($data);
+            $flat = static::get_flattened_data($data);
             $this->offset_field = $this->detect_offset_field_key($flat, static::$offset_field_names);
         }
 
         if (is_null($this->page_size_field)) {
-            $flat = $this->get_flattened_data($data);
+            $flat = static::get_flattened_data($data);
             $this->page_size_field = $this->detect_offset_field_key($flat, static::$page_size_field_names, 'page_size_field');
         }
 

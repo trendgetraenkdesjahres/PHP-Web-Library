@@ -3,118 +3,142 @@
 namespace PHP_Library\Error;
 
 use ReflectionClass;
+use PHP_Library\Debug\Context;
+use PSpell\Config;
 
+/**
+ * Class Error
+ *
+ * Custom error class extending PHP's built-in \Error, with enhanced handling.
+ * Keeps error data minimal and defers contextual info extraction to display time.
+ */
 class Error extends \Error
 {
-    use FormatTrait;
+    use MessageFormatTrait;
 
-    public string $emoji = '😱';
+    /**
+     * Emoji to prefix the error message.
+     *
+     * @var string
+     */
+    protected static string $emoji = '😱';
 
+    /**
+     * Tracks whether the custom handlers have been initialized.
+     *
+     * @var bool
+     */
     private static bool $initialized = false;
 
+    /**
+     * Exit code to use on fatal errors (not currently used internally).
+     *
+     * @var int
+     */
     protected static int $exit_code = 1;
 
-    protected string $file;
-    protected int $line;
+    /**
+     * PHP error level this class handles.
+     *
+     * @var int
+     */
+    protected static int $errno = E_ERROR;
 
-    protected static $errno = E_ERROR;
-
+    /**
+     * Throws this error if the given condition is true.
+     *
+     * @param bool $condition Condition to check.
+     * @param string $message Error message to throw.
+     * @param int $code Optional error code.
+     * @throws self
+     */
     public static function if(bool $condition, string $message, int $code = 0)
     {
-        if ($condition)
-        {
+        if ($condition) {
             throw new self($message, $code);
         }
     }
 
+    /**
+     * Construct the error object.
+     *
+     * @param string $message Error message.
+     * @param int $code Error code.
+     * @param \Throwable|null $previous Previous exception, if any.
+     */
     public function __construct(string $message = "", int $code = 0, \Throwable|null $previous = null)
     {
         parent::__construct($message, $code, $previous);
         self::initialize();
-        if ($trace = $this->getTrace())
-        {
-            $trace = @end($trace);
-            if (isset($trace['file']))
-            {
-                $this->file = $trace['file'];
-                $this->line = $trace['line'];
-            }
-        }
     }
 
     /**
-     * Initialize the custom error handler for handling user PHP_Library\Notices and PHP_Library\Warnings.
-     * This method sets up a custom error handler for E_USER_WARNING and E_USER_NOTICE.
+     * Initialize custom error and exception handlers.
+     *
+     * @return bool True if initialization occurred or was already done.
      */
     final protected static function initialize(): bool
     {
-        if (static::$initialized)
-        {
+        if (static::$initialized) {
             return true;
         }
-        set_error_handler(function ($errno, $message, $file, $line)
-        {
+        set_error_handler(function ($errno, $message, $file, $line) {
             return static::error_handler($errno, $message, $file, $line);
         });
-        set_exception_handler(function ($exception)
-        {
+        set_exception_handler(function ($exception) {
             return static::exception_handler($exception);
         });
         static::$initialized = true;
         return true;
     }
-    private function set_message($message): void
-    {
-        $this->message = $message;
-    }
-    private function set_code($code): void
-    {
-        $this->code = $code;
-    }
-    private function set_file($file): void
-    {
-        $this->file = $file;
-    }
-    private function set_line($line): void
-    {
-        $this->line = $line;
-    }
 
+    /**
+     * Handles errors matching this class's error level.
+     * Converts matching errors into exceptions of this class.
+     *
+     * @param int $errno Error level.
+     * @param string $message Error message.
+     * @param string $file File where error occurred.
+     * @param int $line Line number of error.
+     * @return bool True if handled, false otherwise.
+     * @throws self
+     */
     protected static function error_handler($errno, $message, $file, $line): bool
     {
-        // Only handle errors matching self::$errno
-        if ($errno === self::$errno)
-        {
-            $error = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
-            if ($error instanceof static)
-            {
-                $error->set_message($message);
-                $error->set_code($errno);
-                $error->set_file($file);
-                $error->set_line($line);
-                throw $error;
-            }
-            echo self::format_message($message, $errno) . " in {$file}:{$line}\n";
+        if ($errno === self::$errno) {
+            $context = new Context();
+            print static::format_message(
+                $message,
+                $errno,
+                $context->get_method(),
+                $context->get_file(),
+                $context->get_line()
+            );
             return true;
         }
-        else
-        {
-            // Allow other handlers to process this error
-            return false;
-        }
+        return false;
     }
+
+    /**
+     * Handles uncaught exceptions of this error class.
+     * Extracts context dynamically and formats output.
+     *
+     * @param \Throwable $exception Exception to handle.
+     * @return bool True if handled, false otherwise.
+     */
     protected static function exception_handler($exception): bool
     {
-        // Ensure we're handling only instances of this Error class
-        if ($exception instanceof static)
-        {
-            print self::format_message($exception->getMessage(), $exception->getCode()) .
-                " in {$exception->getFile()}:{$exception->getLine()}\n";
+        if ($exception instanceof static) {
+            $context = new Context(trace: $exception->getTrace());
+            print static::format_message(
+                $exception->getMessage(),
+                $exception->getCode(),
+                $context->get_method(),
+                $context->get_file(),
+                $context->get_line()
+            );
             return true;
         }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 }

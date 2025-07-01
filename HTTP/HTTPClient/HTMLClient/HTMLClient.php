@@ -1,8 +1,9 @@
 <?php
 
-namespace PHP_Library\HTTP\HTTPClient;
+namespace PHP_Library\HTTP\HTTPClient\HTMLClient;
 
 use DOMDocument;
+use PHP_Library\HTTP\HTTPClient\HTTP1Client;
 use PHP_Library\HTTP\HTTPMessage\HTTPHeader;
 
 class HTMLClient extends HTTP1Client

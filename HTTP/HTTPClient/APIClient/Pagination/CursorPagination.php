@@ -1,8 +1,9 @@
 <?php
 
-namespace PHP_Library\HTTP\HTTPClient\APIClient;
+namespace PHP_Library\HTTP\HTTPClient\APIClient\Pagination;
 
 use PHP_Library\Error\Warning;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Payload;
 
 class CursorPagination extends AbstractPagination
 {
@@ -45,30 +46,28 @@ class CursorPagination extends AbstractPagination
     public function get_current_page_query(): array
     {
         $query = [];
-
         if ($this->cursor_field && $this->current_cursor) {
             $query[$this->cursor_field] = $this->current_cursor;
         }
-
         return array_merge($query, $this->get_field_value_array('page_size'));
     }
 
     /**
      * Use the response data to move forward in pagination.
      */
-    protected function browse_forward(array $data): static
+    protected function browse_forward(Payload $payload): static
     {
-        $flat = $this->get_flattened_data($data);
+        $meta_keys = $payload->get_meta_keys();
 
         if (!$this->cursor_field) {
-            $this->cursor_field = $this->detect_cursor_field_key($flat, static::$cursor_field_names, 'cursor_field');
+            $this->cursor_field = $this->detect_cursor_field_key($meta_keys, static::$cursor_field_names, 'cursor_field');
         }
 
         if (!$this->next_cursor_response_key) {
-            $this->next_cursor_response_key = $this->detect_cursor_field_key($flat, static::$next_cursor_response_keys, 'next_cursor_response_key');
+            $this->next_cursor_response_key = $this->detect_cursor_field_key($meta_keys, static::$next_cursor_response_keys, 'next_cursor_response_key');
         }
 
-        $next_cursor = $this->detect_cursor_value($flat, static::$next_cursor_response_keys);
+        $next_cursor = $this->detect_cursor_value($payload->get_meta(), static::$next_cursor_response_keys);
 
         if ($next_cursor && filter_var($next_cursor, FILTER_VALIDATE_URL)) {
             $extracted = $this->extract_cursor_from_url($next_cursor);
@@ -106,10 +105,10 @@ class CursorPagination extends AbstractPagination
     /**
      * Find the first matching field in data.
      */
-    protected function detect_cursor_field_key(array $data, array $candidates, string $field_name): ?string
+    protected function detect_cursor_field_key(array $meta_keys, array $candidates, string $field_name): ?string
     {
         foreach ($candidates as $candidate) {
-            if (array_key_exists($candidate, $data)) {
+            if (in_array($candidate, $meta_keys)) {
                 Warning::trigger("No \$this->{$field_name} set. guessing '$candidate'.");
                 return $candidate;
             }
@@ -120,11 +119,16 @@ class CursorPagination extends AbstractPagination
     /**
      * Detect the value for a known or guessed cursor key.
      */
-    protected function detect_cursor_value(array $data, array $candidates): ?string
+    protected function detect_cursor_value(array $payload_meta, array $candidates): ?string
     {
         foreach ($candidates as $candidate) {
-            if (array_key_exists($candidate, $data)) {
-                $value = $data[$candidate];
+            if (array_key_exists($candidate, $payload_meta)) {
+                $value = $payload_meta[$candidate];
+
+                // sometimes there is a whole url in the response for the next cursor, containing the actual cursor. so it will be extracted here for adapting to the design
+                if (filter_var($value, FILTER_VALIDATE_URL)) {
+                    $value = $this->extract_cursor_from_url($value);
+                }
                 return is_scalar($value) ? (string) $value : null;
             }
         }
@@ -140,14 +144,14 @@ class CursorPagination extends AbstractPagination
         if (!$query) {
             return null;
         }
-
-        parse_str($query, $queryParams);
+        $query_array = [];
+        parse_str($query, $query_array);
 
         if (!$this->cursor_field) {
-            $this->cursor_field = $this->detect_cursor_field_key($queryParams, static::$cursor_field_names, 'cursor_field');
+            $this->cursor_field = $this->detect_cursor_field_key(array_keys($query_array), static::$cursor_field_names, 'cursor_field');
         }
 
         $field = $this->cursor_field;
-        return $field && isset($queryParams[$field]) ? (string)$queryParams[$field] : null;
+        return $field && isset($query_array[$field]) ? (string)$query_array[$field] : null;
     }
 }

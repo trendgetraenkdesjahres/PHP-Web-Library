@@ -1,6 +1,8 @@
 <?php
 
-namespace PHP_Library\HTTP\HTTPClient\APIClient;
+namespace PHP_Library\HTTP\HTTPClient\APIClient\Pagination;
+
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Payload;
 
 /**
  * Abstract base class for implementing paginated API request strategies.
@@ -8,19 +10,19 @@ namespace PHP_Library\HTTP\HTTPClient\APIClient;
 abstract class AbstractPagination
 {
     /** @var int Maximum number of HTTP requests (0 = unlimited). */
-    public int $max_requests = 0;
+    protected int $max_requests = 0;
 
     /** @var int Maximum number of elements to fetch (0 = unlimited). */
-    public int $max_elements = 0;
+    protected int $max_elements = 0;
 
     /** @var int Number of elements per page (0 = no page size limit). */
-    public int $page_size = 100;
+    protected int $page_size = 100;
 
     /** @var float Delay (in seconds) between consecutive requests. */
-    public float $request_delay = 0;
+    protected float $request_delay = 0;
 
     /** @var int Number of requests performed so far. */
-    protected int $request_counter = 1;
+    protected int $request_counter = 0;
 
     /** @var int Number of elements fetched so far. */
     protected int $element_counter = 0;
@@ -44,7 +46,7 @@ abstract class AbstractPagination
     /**
      * Advances pagination state using data from last page.
      */
-    abstract protected function browse_forward(array $data): static;
+    abstract protected function browse_forward(Payload $payload): static;
 
     /**
      * Checks if pagination has reached its end.
@@ -59,17 +61,17 @@ abstract class AbstractPagination
     /**
      * Called after each request to advance pagination state.
      */
-    public function prepare_next_page_query(array $data): static
+    public function prepare_next_page_query(Payload $payload): static
     {
-        $this->element_counter = static::count_elements($data);
+        $this->element_counter = static::count_elements($payload);
 
         if ($this->request_delay > 0) {
             $this->pause_for_delay();
         }
 
-        $this->browse_forward($data);
-        $this->request_counter++;
 
+        $this->browse_forward($payload);
+        $this->request_counter++;
         return $this;
     }
 
@@ -92,34 +94,36 @@ abstract class AbstractPagination
     /**
      * Bulk-set limits and pacing behavior.
      */
-    public function set_limits(?int $max_requests = null, ?int $max_elements = null, int $page_size = null, ?float $request_delay = null): static
+    public function set_limits(?int $max_requests = null, ?int $max_elements = null, ?int $page_size = null, ?float $request_delay = null): static
     {
-        foreach ((new \ReflectionMethod(__CLASS__, __FUNCTION__))->getParameters() as $param) {
-            $name = $param->getName();
-            if ($$name !== null) {
-                $this->$name = $$name;
-            }
-        }
+        if(is_int($max_requests)) {
+            $this->max_requests = $max_requests;
 
+        }
+        if(is_int($max_elements)) {
+            $this->max_elements = $max_elements;
+
+        }
+        if(is_int($page_size)) {
+            $this->page_size = $page_size;
+
+        }
+        if(is_int($request_delay)) {
+            $this->request_delay = $request_delay;
+        }
         return $this;
     }
 
     public function get_status_report(): string {
-        return "Received {$this->element_counter} elements on {$this->request_counter} resources";
+        return "Received a total of {$this->element_counter} elements on {$this->request_counter} resources";
     }
 
     /**
      * Counts the number of items in a known data collection key.
      */
-    protected static function count_elements(array $data): int
+    protected static function count_elements(Payload $payload): int
     {
-        foreach (['data', 'items', 'results', 'collection'] as $key) {
-            if (isset($data[$key]) && is_array($data[$key])) {
-                return count($data[$key]);
-            }
-        }
-
-        return count($data);
+        return  $payload->count();
     }
 
     /**
@@ -142,7 +146,7 @@ abstract class AbstractPagination
     /**
      * Flattens a nested associative array using dot-notation.
      */
-    protected function get_flattened_data(array $data, string $prefix = ''): array
+    protected static function  get_flattened_data(array $data, string $prefix = ''): array
     {
         $result = [];
 
@@ -154,7 +158,7 @@ abstract class AbstractPagination
             $compound_key = $prefix === '' ? $key : "{$prefix}.{$key}";
 
             if (is_array($value)) {
-                $result += $this->get_flattened_data($value, $compound_key);
+                $result += static::get_flattened_data($value, $compound_key);
             } else {
                 $result[$compound_key] = $value;
             }
@@ -182,4 +186,59 @@ abstract class AbstractPagination
 
         return [];
     }
+
+    /**
+ * Factory method to detect and instantiate the appropriate pagination strategy
+ * based on the structure of the first API response.
+ * 
+ * This method flattens the response data and checks for known pagination
+ * indicators to determine whether to use CursorPagination, OffsetPagination,
+ * or (optionally) PageNumberPagination.
+ * 
+ * Detection order is:
+ *  1. Cursor-based pagination (via keys like 'next_cursor', 'paging.next', etc.)
+ *  2. Offset-based pagination (via keys like 'offset', 'start', etc.)
+ *  3. Page-number-based pagination (optional, if class is available)
+ * 
+ * Each match triggers a PHP_Library\Error\Warning for visibility.
+ * 
+ * @param Payload $payload The API response payload
+ * 
+ * @return AbstractPagination An instance of the detected pagination strategy.
+ * 
+ * @throws \RuntimeException If no pagination strategy can be reliably inferred from the response.
+ */
+public static function create_from_first_response(Payload $payload): AbstractPagination
+{
+    $meta_keys = $payload->get_meta_keys();
+
+    // 1. Cursor-based detection
+    foreach (CursorPagination::$next_cursor_response_keys as $key) {
+        if (in_array($key, $meta_keys)) {
+            \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using CursorPagination.");
+            return new CursorPagination();
+        }
+    }
+
+    // 2. Offset-based detection
+    foreach (OffsetPagination::$offset_field_names as $key) {
+        if (in_array($key, $meta_keys)) {
+            \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using OffsetPagination.");
+            return new OffsetPagination();
+        }
+    }
+
+    // 3. Page-number based detection (if available)
+    if (class_exists(PageNumberPagination::class)) {
+        foreach (PageNumberPagination::$page_field_names as $key) {
+            if (in_array($key, $meta_keys)) {
+                \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using PageNumberPagination.");
+                return new PageNumberPagination();
+            }
+        }
+    }
+
+    throw new \RuntimeException('Unable to detect pagination strategy from the first payload.');
+}
+
 }

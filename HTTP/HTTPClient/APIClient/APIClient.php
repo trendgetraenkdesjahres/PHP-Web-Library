@@ -1,11 +1,15 @@
 <?php
 
-namespace PHP_Library\HTTP\HTTPClient;
+namespace PHP_Library\HTTP\HTTPClient\APIClient;
 
-use PHP_Library\Error\Error;
 use PHP_Library\Error\Notice;
+use PHP_Library\HTTP\HTTPClient\AbstractAuth;
+use PHP_Library\HTTP\HTTPClient\APIClient\Error\APIClientError;
 use PHP_Library\HTTP\HTTPMessage\HTTPHeader;
-use PHP_Library\HTTP\HTTPClient\APIClient\AbstractPagination;
+use PHP_Library\HTTP\HTTPClient\APIClient\Pagination\AbstractPagination;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Payload;
+use PHP_Library\HTTP\HTTPClient\Error\HTTPClientError;
+use PHP_Library\HTTP\HTTPClient\HTTP1Client;
 use SimpleXMLElement;
 
 /**
@@ -13,39 +17,33 @@ use SimpleXMLElement;
  */
 class APIClient extends HTTP1Client
 {
-    /** @var array Consolidated API response data. */
-    public array $data = [];
-
+    /** @var null|Payload Consolidated API response data. */
+    public ?Payload $payload = null;
     /** @var AbstractPagination|null Pagination strategy instance. */
     protected ?AbstractPagination $pagination;
 
-    /** @var string|null Key pointing to primary list of items in each response. */
-    protected ?string $primary_list_key = null;
-
-    /** @var array Common field names for collections in paginated responses. */
-    protected static array $primary_list_key_field_names = [
-        'items',
-        'collection',
-        'results',
-        'records',
-        'entries',
-        'elements',
-        'rows',
-    ];
-
     /**
      * Constructor.
+     *
+     * @param string $url
+     * @param string $default_method
+     * @param string $data
+     * @param HTTPHeader|null $header
+     * @param AbstractPagination|null $pagination
      */
     public function __construct(
         string $url,
         string $default_method = 'GET',
         string $data = '',
         ?HTTPHeader $header = null,
-        ?AbstractPagination $pagination = null
+        ?AbstractPagination $pagination = null,
+        ?AbstractAuth $auth = null
     ) {
         if ($header === null) {
             $header = new HTTPHeader();
         }
+
+        $this->auth = $auth;
 
         $header->accept = 'application/json';
 
@@ -55,21 +53,33 @@ class APIClient extends HTTP1Client
 
     /**
      * Send the request and handle all paginated responses.
+     *
+     * @param string|null $method
+     * @return static
+     * @throws HTTPClientError When response status code is not 200.
      */
-    public function send(?string $method = null): static
+    public function send(?string $method = null, ?int $max_requests = null, ?int $max_elements = null, ?int $page_size = null, ?float $request_delay = null): static
     {
+        if (isset($this->pagination) &&  !is_null($this->pagination)) {
+            $this->pagination->set_limits($max_requests, $max_elements, $page_size, $request_delay);
+        }
         do {
-            $this->add_to_query($this->pagination->get_current_page_query());
-            Notice::trigger($this->pagination->get_status_report());
-            parent::send($method);
-
-            if ($this->response->status_code !== 200) {
-                throw new Error($this->host.": ".$this->response->reason_phrase ."\n".$this->response->raw_body, $this->response->status_code);
+            if ($this->pagination) {
+                $this->add_to_query($this->pagination->get_current_page_query());
             }
 
-            $this->update_data_from_raw_body();
+            parent::send($method);
+            if ($this->response->status_code !== 200) {
+                throw new APIClientError("Unexpected status code {$this->response->status_code}");
+            }
+            $this->update_payload_from_raw_body();
+            if (!$this->pagination) {
+                $this->pagination = AbstractPagination::create_from_first_response($this->payload);
+                $this->pagination->set_limits($max_requests, $max_elements, $page_size, $request_delay);
+            }
 
-            $this->pagination->prepare_next_page_query($this->data);
+            $this->pagination->prepare_next_page_query($this->payload);
+            Notice::trigger($this->pagination->get_status_report());
         } while ($this->pagination->has_next());
 
         return $this;
@@ -77,13 +87,15 @@ class APIClient extends HTTP1Client
 
     /**
      * Debug info representation.
+     *
+     * @return array<string,mixed>
      */
     public function __debugInfo(): array
     {
         $info = array_merge(
             parent::__debugInfo(),
             [
-                'data' => $this->data,
+                'data' => $this->payload,
                 'response' => $this->response->start_line,
             ]
         );
@@ -93,9 +105,11 @@ class APIClient extends HTTP1Client
     }
 
     /**
-     * Decode the raw response body and consolidate it into `$this->data`.
+     * Decode the raw response body and consolidate it into `$this->payload`.
+     *
+     * @return static
      */
-    protected function update_data_from_raw_body(): static
+    protected function update_payload_from_raw_body(): static
     {
         $result = [];
 
@@ -111,17 +125,30 @@ class APIClient extends HTTP1Client
             case 'application/ld+json':
             case 'application/json':
                 $result = json_decode($this->response->raw_body, true);
+                if ($result === null && json_last_error() !== JSON_ERROR_NONE) {
+                    // Invalid JSON; fail hard or fallback?
+                    throw new HTTPClientError("Invalid JSON in response body");
+                }
                 break;
 
             default:
+                // Unsupported content type - leave $result empty or raw text?
                 break;
         }
 
-        return $this->consolidate_data($result);
+        if ($this->payload) {
+            $this->payload->consolidate_payload(new Payload($result));
+        } else {
+            $this->payload = new Payload($result);
+        }
+
+        return $this;
     }
 
     /**
      * Determine the content type of the current response.
+     *
+     * @return string
      */
     protected function determine_content_type(): string
     {
@@ -136,57 +163,10 @@ class APIClient extends HTTP1Client
     }
 
     /**
-     * Merge a newly parsed response into the global `$data` store.
-     */
-    protected function consolidate_data(array $new_data): static
-    {
-        if ($this->primary_list_key === null) {
-            $this->primary_list_key = $this->detect_primary_key_name($new_data);
-        }
-
-        foreach ($new_data as $key => $value) {
-            if (!isset($this->data[$key])) {
-                $this->data[$key] = $value;
-                continue;
-            }
-
-            if ($key === $this->primary_list_key && static::is_list_of_items($value)) {
-                $this->data[$key] = array_merge($this->data[$key], $value);
-            } else {
-                $this->data[$key] = $value;
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Detect the most likely field name representing the main item collection.
-     */
-    protected function detect_primary_key_name(array $data): string
-    {
-        foreach (array_keys($data) as $key) {
-            if (
-                in_array($key, static::$primary_list_key_field_names, true)
-                && static::is_list_of_items($data[$key])
-            ) {
-                return $key;
-            }
-        }
-
-        return '';
-    }
-
-    /**
-     * Determine if a value is a list (numerically indexed array).
-     */
-    protected static function is_list_of_items(mixed $val): bool
-    {
-        return is_array($val) && array_keys($val) === range(0, count($val) - 1);
-    }
-
-    /**
      * Convert an XML string into an associative array.
+     *
+     * @param SimpleXMLElement|string $xml_data
+     * @return array<string,mixed>
      */
     protected static function xml_parser(SimpleXMLElement|string $xml_data): array
     {

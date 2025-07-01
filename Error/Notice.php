@@ -2,11 +2,12 @@
 
 namespace PHP_Library\Error;
 
+use PHP_Library\Debug\Context;
+
 class Notice
 {
-
-    use FormatTrait;
-
+    use MessageFormatTrait;
+    
     /**
      * Notice class extends the base \Exception class and handles custom PHP_Library\Notices.
      */
@@ -57,7 +58,8 @@ class Notice
         set_error_handler(
             function ($errno, $message, $file, $line) {
                 if ($errno === self::$errno || $errno === self::$user_errno) {
-                    echo self::format_message($message) . "\n";
+                    $context = new Context();
+                    echo static::format_message($message, null, $context->get_method(),  $context->get_file());
                     return true;
                 }
                 return false;
@@ -66,7 +68,8 @@ class Notice
         set_exception_handler(
             function ($exception) {
                 if (get_class($exception) === __CLASS__) {
-                    echo self::format_message($exception->message) . "\n";
+                    $context = new Context();
+                    echo static::format_message($exception->message, null, $context->method, $context->get_file(), null);
                     return true;
                 }
                 return false;

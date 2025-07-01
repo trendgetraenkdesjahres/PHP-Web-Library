@@ -6,6 +6,7 @@ use CurlHandle;
 use PHP_Library\HTTP\HTTP1Request\HTTP1Request;
 use PHP_Library\HTTP\HTTPMessage\HTTPHeader;
 use PHP_Library\HTTP\HTTPResponse\HTTPResponse;
+use PHP_Library\HTTP\HTTPClient\Error\HTTPClientError;
 
 class HTTP1Client extends HTTP1Request
 {
@@ -13,11 +14,12 @@ class HTTP1Client extends HTTP1Request
     protected string $scheme;
     protected ?int $port;
     protected string $path;
-    protected array|string $query;
+    protected array $query;
     protected string $fragment;
     protected ?string $agent = null;
     protected ?string $cookie_file = null;
     protected array $request_data = [];
+    protected ?AbstractAuth $auth = null;
 
     public HTTPResponse $response;
 
@@ -26,21 +28,18 @@ class HTTP1Client extends HTTP1Request
         if (!$agent) {
             $agent = "curl/" . curl_version()['version'];
         }
-        if (! preg_match('/^.{3,}:\/\//', $url)) {
-            $url = 'https://' . $url;
-        }
         if (!filter_var($url, FILTER_VALIDATE_URL)) {
-            throw new \Error("$url invalid.");
+            throw new HTTPClientError("$url invalid.");
         }
         $resource = parse_url($url);
         $this->host = $resource['host'];
         $this->scheme = $resource['scheme'] ?? 'http';
         $this->port = $resource['port'] ?? null;
         $this->path = $resource['path'] ?? '/';
-        $this->query = $resource['query'] ?? '';
+        $this->query = $resource['query'] ?? [];
         $this->fragment = $resource['fragment'] ?? '';
         $this->agent = $agent;
-        $request_uri = $this->path . ($this->query ?? "{?$this->query}") . ($this->fragment ?? "{#$this->fragment}");
+        $request_uri = $this->path . ($this->query ? "?".$this->get_query_string() :"" ). ($this->fragment ?? "{#$this->fragment}");
         if (is_array($data)) {
             $this->request_data = $data;
             $data = '';
@@ -52,14 +51,7 @@ class HTTP1Client extends HTTP1Request
     {
         $info = [
             'agent' => $this->agent,
-            'request_url' => static::build_url(
-                $this->scheme,
-                $this->host,
-                $this->port,
-                $this->path,
-                $this->query,
-                $this->fragment
-            )
+            'request_url' => $this->get_current_request_url()
         ];
         if ($this->response) {
             $info['response'] = "{$this->response->start_line}\n{$this->response->raw_body}";
@@ -73,6 +65,21 @@ class HTTP1Client extends HTTP1Request
         $info =  array_merge(parent::__debugInfo(), $info);
         unset($info['raw_body']);
         return $info;
+    }
+
+    public function get_current_request_url(): string
+    {
+        if ($this->auth) {
+            $this->add_to_query($this->auth->get_query_params());
+        }
+            return static::build_url(
+                $this->scheme,
+                $this->host,
+                $this->port,
+                $this->path,
+                $this->query,
+                $this->fragment
+            );
     }
 
     public function set_path(string $path): static
@@ -93,8 +100,11 @@ class HTTP1Client extends HTTP1Request
             $this->query = array_merge($this->query, $query_data);
             return $this;
         }
-        $this->query = $this->query . "&" . http_build_query($query_data);
         return $this;
+    }
+
+    public function get_query_string(): string {
+        return http_build_query($this->query);
     }
 
     public function set_target_url(string $target = '', ?array $query_parameters = null): static
@@ -133,7 +143,7 @@ class HTTP1Client extends HTTP1Request
         $header_size = curl_getinfo($handle, CURLINFO_HEADER_SIZE);
         $result = curl_exec($handle);
         if (false === $result) {
-            throw new \Error(curl_error($handle));
+            throw new HTTPClientError(curl_error($handle));
         }
         $this->response = HTTPResponse::from_raw(
             substr($result, 0, $header_size) . PHP_EOL . substr($result, $header_size)
@@ -143,17 +153,8 @@ class HTTP1Client extends HTTP1Request
 
     protected function create_curl_handle(): CurlHandle
     {
-        $url = static::build_url(
-            $this->scheme,
-            $this->host,
-            $this->port,
-            $this->path,
-            $this->query,
-            $this->fragment
-        );
-
         $opts = [
-            CURLOPT_URL => $url,
+            CURLOPT_URL => $this->get_current_request_url(),
             CURLOPT_CUSTOMREQUEST => $this->method,
             CURLOPT_HTTPHEADER => $this->header ? $this->header->to_array() : [],
         ];
