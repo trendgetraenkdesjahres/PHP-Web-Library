@@ -4,6 +4,7 @@ namespace PHP_Library\HTTP\HTTPClient;
 
 use CurlHandle;
 use PHP_Library\HTTP\HTTP1Request\HTTP1Request;
+use PHP_Library\HTTP\HTTPClient\Auth\AbstractAuth;
 use PHP_Library\HTTP\HTTPMessage\HTTPHeader;
 use PHP_Library\HTTP\HTTPResponse\HTTPResponse;
 use PHP_Library\HTTP\HTTPClient\Error\HTTPClientError;

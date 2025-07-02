@@ -3,7 +3,7 @@
 namespace PHP_Library\HTTP\HTTPClient\APIClient;
 
 use PHP_Library\Error\Notice;
-use PHP_Library\HTTP\HTTPClient\AbstractAuth;
+use PHP_Library\HTTP\HTTPClient\Auth\AbstractAuth;
 use PHP_Library\HTTP\HTTPClient\APIClient\Error\APIClientError;
 use PHP_Library\HTTP\HTTPMessage\HTTPHeader;
 use PHP_Library\HTTP\HTTPClient\APIClient\Pagination\AbstractPagination;
