@@ -163,6 +163,18 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
         return $this->item !== null;
     }
 
+    public function get_item(): false|Item
+    {
+        if ($this->is_single_item()) {
+            return $this->item;
+        }
+        if ($this->is_collection()) {
+            $first_key = array_key_first($this->collection);
+            return $this->collection[$first_key];
+        }
+        return false;
+    }
+
     /**
      * Return a subset of fields for each item in the collection.
      *

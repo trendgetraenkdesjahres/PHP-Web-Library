@@ -53,13 +53,13 @@ class HTTP1Client extends HTTP1Request
             'agent' => $this->agent,
             'request_url' => $this->get_current_request_url()
         ];
-        if ($this->response) {
+        if (isset($this->response)) {
             $info['response'] = "{$this->response->start_line}\n{$this->response->raw_body}";
         }
-        if ($this->request_data) {
+        if (isset($this->request_data)) {
             $info['request_data'] = $this->request_data;
         }
-        if ($this->cookie_file) {
+        if (isset($this->cookie_file)) {
             $info['cookie_file'] = $this->cookie_file;
         }
         $info =  array_merge(parent::__debugInfo(), $info);

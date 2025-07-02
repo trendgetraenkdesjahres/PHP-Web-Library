@@ -2,6 +2,7 @@
 
 namespace PHP_Library\HTTP\HTTPClient\APIClient\Pagination;
 
+use PHP_Library\Error\Warning;
 use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Payload;
 
 /**
@@ -204,18 +205,16 @@ abstract class AbstractPagination
  * 
  * @param Payload $payload The API response payload
  * 
- * @return AbstractPagination An instance of the detected pagination strategy.
- * 
- * @throws \RuntimeException If no pagination strategy can be reliably inferred from the response.
+ * @return false|AbstractPagination An instance of the detected pagination strategy.
  */
-public static function create_from_first_response(Payload $payload): AbstractPagination
+public static function create_from_first_response(Payload $payload): AbstractPagination|false
 {
     $meta_keys = $payload->get_meta_keys();
 
     // 1. Cursor-based detection
     foreach (CursorPagination::$next_cursor_response_keys as $key) {
         if (in_array($key, $meta_keys)) {
-            \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using CursorPagination.");
+            Warning::trigger("Detected '$key' in payload. Using CursorPagination.");
             return new CursorPagination();
         }
     }
@@ -223,22 +222,22 @@ public static function create_from_first_response(Payload $payload): AbstractPag
     // 2. Offset-based detection
     foreach (OffsetPagination::$offset_field_names as $key) {
         if (in_array($key, $meta_keys)) {
-            \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using OffsetPagination.");
+            Warning::trigger("Detected '$key' in payload. Using OffsetPagination.");
             return new OffsetPagination();
         }
     }
 
     // 3. Page-number based detection (if available)
-    if (class_exists(PageNumberPagination::class)) {
+/*     if (class_exists(PageNumberPagination::class)) {
         foreach (PageNumberPagination::$page_field_names as $key) {
             if (in_array($key, $meta_keys)) {
                 \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using PageNumberPagination.");
                 return new PageNumberPagination();
             }
         }
-    }
+    } */
 
-    throw new \RuntimeException('Unable to detect pagination strategy from the first payload.');
+        Warning::trigger('Unable to detect pagination strategy from the payload.');        return false;
 }
 
 }

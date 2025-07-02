@@ -3,6 +3,7 @@
 namespace PHP_Library\HTTP\HTTPClient\APIClient\Pagination;
 
 use PHP_Library\Error\Warning;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Payload;
 
 class OffsetPagination extends AbstractPagination
 {
@@ -29,19 +30,21 @@ class OffsetPagination extends AbstractPagination
         );
     }
 
-    protected function browse_forward(array $data): static
+    protected function browse_forward(Payload $payload): static
     {
         if (is_null($this->offset_field)) {
-            $flat = static::get_flattened_data($data);
+            $flat = static::get_flattened_data($payload->to_array());
             $this->offset_field = $this->detect_offset_field_key($flat, static::$offset_field_names);
         }
-
+        
         if (is_null($this->page_size_field)) {
-            $flat = static::get_flattened_data($data);
+            if(!isset($flat)) {
+                $flat = static::get_flattened_data($payload->to_array());
+            }
             $this->page_size_field = $this->detect_offset_field_key($flat, static::$page_size_field_names, 'page_size_field');
         }
 
-        $count = static::count_elements($data);
+        $count = $payload->count();
         $new_items = max(0, $count - $this->element_counter);
 
         $this->offset += $new_items;

@@ -60,7 +60,7 @@ class APIClient extends HTTP1Client
      */
     public function send(?string $method = null, ?int $max_requests = null, ?int $max_elements = null, ?int $page_size = null, ?float $request_delay = null): static
     {
-        if (isset($this->pagination) &&  !is_null($this->pagination)) {
+        if (!is_null($this->pagination)) {
             $this->pagination->set_limits($max_requests, $max_elements, $page_size, $request_delay);
         }
         do {
@@ -73,14 +73,18 @@ class APIClient extends HTTP1Client
                 throw new APIClientError("Unexpected status code {$this->response->status_code}");
             }
             $this->update_payload_from_raw_body();
-            if (!$this->pagination) {
-                $this->pagination = AbstractPagination::create_from_first_response($this->payload);
-                $this->pagination->set_limits($max_requests, $max_elements, $page_size, $request_delay);
+            if (!isset($this->pagination)) {
+                $auto_pagination =  AbstractPagination::create_from_first_response($this->payload);
+                $this->pagination = $auto_pagination ? $auto_pagination : null;
+                if (!is_null($this->pagination)) {
+                    $this->pagination->set_limits($max_requests, $max_elements, $page_size, $request_delay);
+                }
             }
-
-            $this->pagination->prepare_next_page_query($this->payload);
-            Notice::trigger($this->pagination->get_status_report());
-        } while ($this->pagination->has_next());
+            if (!is_null($this->pagination)) {
+                $this->pagination->prepare_next_page_query($this->payload);
+                Notice::trigger($this->pagination->get_status_report());
+            }
+        } while (!is_null($this->pagination) && $this->pagination->has_next());
 
         return $this;
     }
@@ -92,12 +96,22 @@ class APIClient extends HTTP1Client
      */
     public function __debugInfo(): array
     {
+        $new_info =   [];
+        if (isset($this->payload)) {
+            if ($this->payload->is_single_item()) {
+                $new_info['payload'] = $this->payload->get_item();
+            }
+            if ($this->payload->is_collection()) {
+                $new_info['payload'] = $this->payload->get_collection();
+            }
+        }
+        if (isset($this->response)) {
+            $new_info['response'] = $this->response->start_line;
+        }
+
         $info = array_merge(
             parent::__debugInfo(),
-            [
-                'data' => $this->payload,
-                'response' => $this->response->start_line,
-            ]
+            $new_info
         );
 
         unset($info['raw_body']);
