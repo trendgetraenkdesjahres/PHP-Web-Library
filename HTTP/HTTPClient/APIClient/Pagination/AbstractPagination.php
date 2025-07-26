@@ -64,7 +64,6 @@ abstract class AbstractPagination
      */
     public function prepare_next_page_query(Payload $payload): static
     {
-        $this->element_counter = static::count_elements($payload);
 
         if ($this->request_delay > 0) {
             $this->pause_for_delay();
@@ -79,13 +78,13 @@ abstract class AbstractPagination
     /**
      * Checks if more data should be fetched.
      */
-    public function has_next(): bool
+    public function has_next(int $current_elements = 0): bool
     {
         if ($this->max_requests && $this->request_counter > $this->max_requests) {
             return false;
         }
 
-        if ($this->max_elements && $this->element_counter >= $this->max_elements) {
+        if ($this->max_elements && $current_elements >= $this->max_elements) {
             return false;
         }
 
@@ -97,34 +96,24 @@ abstract class AbstractPagination
      */
     public function set_limits(?int $max_requests = null, ?int $max_elements = null, ?int $page_size = null, ?float $request_delay = null): static
     {
-        if(is_int($max_requests)) {
+        if (is_int($max_requests)) {
             $this->max_requests = $max_requests;
-
         }
-        if(is_int($max_elements)) {
+        if (is_int($max_elements)) {
             $this->max_elements = $max_elements;
-
         }
-        if(is_int($page_size)) {
+        if (is_int($page_size)) {
             $this->page_size = $page_size;
-
         }
-        if(is_int($request_delay)) {
+        if (is_int($request_delay)) {
             $this->request_delay = $request_delay;
         }
         return $this;
     }
 
-    public function get_status_report(): string {
-        return "Received a total of {$this->element_counter} elements on {$this->request_counter} resources";
-    }
-
-    /**
-     * Counts the number of items in a known data collection key.
-     */
-    protected static function count_elements(Payload $payload): int
+    public function count_requests(): int
     {
-        return  $payload->count();
+        return $this->request_counter;
     }
 
     /**
@@ -188,47 +177,48 @@ abstract class AbstractPagination
         return [];
     }
 
+
     /**
- * Factory method to detect and instantiate the appropriate pagination strategy
- * based on the structure of the first API response.
- * 
- * This method flattens the response data and checks for known pagination
- * indicators to determine whether to use CursorPagination, OffsetPagination,
- * or (optionally) PageNumberPagination.
- * 
- * Detection order is:
- *  1. Cursor-based pagination (via keys like 'next_cursor', 'paging.next', etc.)
- *  2. Offset-based pagination (via keys like 'offset', 'start', etc.)
- *  3. Page-number-based pagination (optional, if class is available)
- * 
- * Each match triggers a PHP_Library\Error\Warning for visibility.
- * 
- * @param Payload $payload The API response payload
- * 
- * @return false|AbstractPagination An instance of the detected pagination strategy.
- */
-public static function create_from_first_response(Payload $payload): AbstractPagination|false
-{
-    $meta_keys = $payload->get_meta_keys();
+     * Factory method to detect and instantiate the appropriate pagination strategy
+     * based on the structure of the first API response.
+     * 
+     * This method flattens the response data and checks for known pagination
+     * indicators to determine whether to use CursorPagination, OffsetPagination,
+     * or (optionally) PageNumberPagination.
+     * 
+     * Detection order is:
+     *  1. Cursor-based pagination (via keys like 'next_cursor', 'paging.next', etc.)
+     *  2. Offset-based pagination (via keys like 'offset', 'start', etc.)
+     *  3. Page-number-based pagination (optional, if class is available)
+     * 
+     * Each match triggers a PHP_Library\Error\Warning for visibility.
+     * 
+     * @param array $payload_meta The API response meta array
+     * 
+     * @return false|AbstractPagination An instance of the detected pagination strategy.
+     */
+    public static function create_from_first_responses_meta(array $payload_meta): AbstractPagination|false
+    {
+        $meta_keys = array_keys($payload_meta);
 
-    // 1. Cursor-based detection
-    foreach (CursorPagination::$next_cursor_response_keys as $key) {
-        if (in_array($key, $meta_keys)) {
-            Warning::trigger("Detected '$key' in payload. Using CursorPagination.");
-            return new CursorPagination();
+        // 1. Cursor-based detection
+        foreach (CursorPagination::$next_cursor_response_keys as $key) {
+            if (in_array($key, $meta_keys)) {
+                Warning::trigger("Detected '$key' in payload. Using CursorPagination.");
+                return new CursorPagination();
+            }
         }
-    }
 
-    // 2. Offset-based detection
-    foreach (OffsetPagination::$offset_field_names as $key) {
-        if (in_array($key, $meta_keys)) {
-            Warning::trigger("Detected '$key' in payload. Using OffsetPagination.");
-            return new OffsetPagination();
+        // 2. Offset-based detection
+        foreach (OffsetPagination::$offset_field_names as $key) {
+            if (in_array($key, $meta_keys)) {
+                Warning::trigger("Detected '$key' in payload. Using OffsetPagination.");
+                return new OffsetPagination();
+            }
         }
-    }
 
-    // 3. Page-number based detection (if available)
-/*     if (class_exists(PageNumberPagination::class)) {
+        // 3. Page-number based detection (if available)
+        /*     if (class_exists(PageNumberPagination::class)) {
         foreach (PageNumberPagination::$page_field_names as $key) {
             if (in_array($key, $meta_keys)) {
                 \PHP_Library\Error\Warning::trigger("Detected '$key' in payload. Using PageNumberPagination.");
@@ -237,7 +227,7 @@ public static function create_from_first_response(Payload $payload): AbstractPag
         }
     } */
 
-        Warning::trigger('Unable to detect pagination strategy from the payload.');        return false;
-}
-
+        Warning::trigger('Unable to detect pagination strategy from the payload.');
+        return false;
+    }
 }

@@ -113,6 +113,9 @@ class Context
      */
     public function get_file(bool $relative = true): ?string
     {
+        if (is_null($this->file)) {
+            return null;
+        }
         if ($relative) {
             return substr($this->file, strlen(getcwd()) + 1);
         }
@@ -126,6 +129,9 @@ class Context
      */
     public function get_line(): ?string
     {
+        if (is_null($this->line)) {
+            return null;
+        }
         return $this->line;
     }
 

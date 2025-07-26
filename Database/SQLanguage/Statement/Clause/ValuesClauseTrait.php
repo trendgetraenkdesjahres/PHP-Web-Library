@@ -39,6 +39,7 @@ trait ValuesClauseTrait
      */
     public function values(string|int|float ...$value): self
     {
+        // TODO issues with non-string values
         if ($this->values_clause_completed) {
             throw new SQLanguageError("Can not append more values to complete VALUES clause.");
         }

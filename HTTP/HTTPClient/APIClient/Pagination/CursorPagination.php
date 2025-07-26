@@ -26,6 +26,7 @@ class CursorPagination extends AbstractPagination
         'paging.next',
         'meta.next_cursor',
         'next_href',
+        'next'
     ];
 
     protected ?string $cursor_field = null;

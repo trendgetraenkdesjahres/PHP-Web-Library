@@ -123,7 +123,7 @@ class CLIConsole
             return [];
         }
         $matches = [];
-        $suggestions = \array_merge(
+        $suggestions = array_merge(
             readline_list_history(),
             get_defined_functions()['user'],
             get_defined_functions()['internal'],

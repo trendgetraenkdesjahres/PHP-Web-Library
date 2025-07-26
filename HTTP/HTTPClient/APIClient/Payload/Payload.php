@@ -2,145 +2,79 @@
 
 namespace PHP_Library\HTTP\HTTPClient\APIClient\Payload;
 
-use ArrayAccess;
-use ArrayIterator;
 use PHP_Library\HTTP\HTTPClient\APIClient\Error\APIClientError;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Classifier\KeyNameScorer;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Classifier\PayloadClassifier;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Classifier\RootContainerScorer;
+use PHP_Library\HTTP\HTTPClient\APIClient\Payload\Classifier\ValueStructureScorer;
 
 /**
  * Payload wrapper for a decoded API response.
  *
- * Contains either a single resource (`$item`) or a collection (`$collection`),
- * with optional metadata and errors. Implements iterable, array access, and countable.
+ * Represents either a single resource (`$content` as Item) or a resource collection (`$content` as Collection),
+ * with optional metadata and error information. Implements Countable interface.
  */
-class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
+class Payload implements \Countable
 {
-    /** @var string[] Common keys expected to contain the primary list of resources. */
-    protected static array $primary_list_key = [
-        'items',
-        'collection',
-        'results',
-        'records',
-        'entries',
-        'elements',
-        'rows',
-    ];
+    /** @var Item|Collection Main response content */
+    protected Item|Collection $content;
 
-    /** @var string[] Keys typically used to indicate error blocks. */
-    protected static array $error_key = [
-        'errors',
-        'error'
-    ];
-
-    /** @var string[] Keys commonly used for metadata. */
-    protected static array $meta_key = [
-        'meta',
-        'pagination',
-        'paging'
-    ];
-
-    /** @var Item[]|null List of resource items if plural. */
-    protected ?array $collection = null;
-
-    /** @var Item|null A single resource item. */
-    protected ?Item $item = null;
-
-    /** @var array<string,mixed> Metadata (pagination, counts, etc.). */
+    /** @var array<string,mixed> Metadata related to the payload (e.g., pagination) */
     protected array $meta = [];
 
-    /** @var array<string,mixed> Errors returned in the response. */
-    protected array $errors = [];
+    /** @var array<string,mixed> Error information returned by the API */
+    protected array $error = [];
 
-    /** @var array<int|string,mixed> The raw, untouched response data. */
+    /** @var array<int|string,mixed> Unmodified decoded response body */
     protected readonly array $raw;
 
     /**
-     * Constructor.
-     *
-     * Parses raw API response, detects standard keys, and builds internal structure.
-     *
-     * @param array $data Raw decoded API response.
-     * @param string|null $collection_key Override for item list key.
-     * @param string|null $meta_key Override for metadata key.
-     * @param string|null $error_key Override for error key.
+     * @param array $data Raw decoded API response
      */
-    public function __construct(array $data, ?string $collection_key = null, ?string $meta_key = null, ?string $error_key = null)
+    public function __construct(array $data)
     {
         $this->raw = $data;
 
-        $collection_key ??= $this->detect_primary_key($data);
-        $meta_key ??= $this->detect_meta_key($data);
-        $error_key ??= $this->detect_error_key($data);
+        $classifier = new PayloadClassifier([
+            KeyNameScorer::class,
+            ValueStructureScorer::class,
+            RootContainerScorer::class,
+        ]);
 
-        foreach ($data as $key => $value) {
-            switch (true) {
-                case $key === $collection_key && static::is_list_of_items($value) && is_null($this->item):
-                    $this->collection = array_map(static fn(array $item) => new Item($item), $value);
-                    break;
+        $classification = $classifier->classify($data);
 
-                case $key === $collection_key && is_null($this->collection):
-                    $this->item = new Item($value);
-                    break;
+        $this->meta = $classification->get_meta();
+        $this->error = $classification->get_error();
 
-                case $key === $meta_key:
-                    $this->meta = $value;
-                    break;
+        $content_data = $classification->get_content();
 
-                case $key === $error_key:
-                    $this->errors = $value;
-                    break;
-
-                default:
-                    if (is_null($this->collection)) {
-                        if ($this->item === null) {
-                            $this->item = new Item([$key => $value]);
-                        } else {
-                            $this->item->merge([$key => $value]);
-                        }
-                    } else {
-                        // fallback to meta if item is already filled
-                        $this->meta[$key] = $value;
-                    }
-            }
-        }
-
-        if ($this->collection === null && $this->item === null) {
-            $this->item = new Item($data);
+        if (empty($content_data)) {
+            $this->content = new Item($data);
+        } elseif (Collection::is_list_of_items($content_data)) {
+            $this->content = new Collection($content_data);
+        } else {
+            $this->content = new Item($content_data);
         }
     }
 
     /**
      * Merge another payload into this one.
      *
-     * @param self $new_payload The incoming payload to merge.
+     * @param self $new_payload Payload instance to merge
      * @return static
      */
     public function consolidate_payload(self $new_payload): static
     {
-        if ($this->is_single_item()) {
-            $this->collection = [$this->item];
-            $this->item = null;
-
-            $incoming = $new_payload->is_single_item()
-                ? [$new_payload->item]
-                : $new_payload->collection;
-
-            $this->collection = array_merge($this->collection, $incoming);
-        } elseif ($this->is_collection()) {
-            $incoming = $new_payload->is_single_item()
-                ? [$new_payload->item]
-                : $new_payload->collection;
-
-            $this->collection = array_merge($this->collection, $incoming);
-        }
-
-        $this->meta = array_merge($this->meta, $new_payload->meta);
-        $this->errors = array_merge($this->errors, $new_payload->errors);
-
+        $this->content->merge($new_payload->get_content());
+        $this->meta = array_merge($this->meta, $new_payload->get_meta());
+        $this->error = array_merge($this->error, $new_payload->get_error());
         return $this;
     }
 
     /**
-     * Return raw decoded response.
+     * Get the raw decoded response as an array.
+     *
+     * @return array
      */
     public function to_array(): array
     {
@@ -148,37 +82,59 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
     }
 
     /**
-     * Check if payload holds a collection of items.
+     * Check if the payload holds a collection.
+     *
+     * @return bool
      */
     public function is_collection(): bool
     {
-        return $this->collection !== null;
+        return $this->content instanceof Collection;
     }
 
     /**
-     * Check if payload holds a single item.
+     * Check if the payload holds a single item.
+     *
+     * @return bool
      */
     public function is_single_item(): bool
     {
-        return $this->item !== null;
+        return $this->content instanceof Item;
     }
 
-    public function get_item(): false|Item
+    /**
+     * Return the internal content (cloned).
+     *
+     * @return Item|Collection
+     */
+    public function get_content(): Item|Collection
+    {
+        return clone $this->content;
+    }
+
+    /**
+     * Return a specific item, optionally narrowed to selected fields.
+     *
+     * @param string ...$key Field names
+     * @return Item|false
+     */
+    public function get_item(string ...$key): false|Item
     {
         if ($this->is_single_item()) {
-            return $this->item;
+            return $this->content->copy($key, false);
         }
+
         if ($this->is_collection()) {
-            $first_key = array_key_first($this->collection);
-            return $this->collection[$first_key];
+            $array = $this->content->to_array();
+            return $this->content[array_key_first($array)]->copy($key, false);
         }
+
         return false;
     }
 
     /**
-     * Return a subset of fields for each item in the collection.
+     * Return a filtered list of items with selected fields.
      *
-     * @param string ...$key Field names to extract.
+     * @param string ...$key Field names
      * @return array<Item>
      * @throws APIClientError
      */
@@ -187,18 +143,20 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
         if (! $this->is_collection()) {
             throw new APIClientError("No collection.");
         }
+
         $result = [];
-        foreach ($this->collection as $item) {
+        foreach ($this->content as $item) {
             $result[] = $item->copy($key);
         }
+
         return $result;
     }
 
     /**
-     * Get the collection or a list of selected fields from each item.
+     * Return the full collection or a subset of fields for each item.
      *
-     * @param string|null $key First field.
-     * @param string ...$keys Additional fields.
+     * @param string|null $key Optional first field
+     * @param string ...$keys Additional fields
      * @return array<Item>|false
      */
     public function get_collection(?string $key = null, string ...$keys): false|array
@@ -208,11 +166,11 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
         }
 
         if (is_null($key)) {
-            return $this->collection;
+            return $this->content->to_array();
         }
 
         $result = [];
-        foreach ($this->collection as $item) {
+        foreach ($this->content as $item) {
             $result[] = $item->copy([$key, ...$keys], false);
         }
 
@@ -222,7 +180,7 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
     /**
      * Get a metadata value or all metadata.
      *
-     * @param string|null $key
+     * @param string|null $key Metadata key or null for all
      * @return mixed
      * @throws APIClientError
      */
@@ -232,7 +190,7 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
             return $this->meta;
         }
 
-        if (!isset($this->meta[$key])) {
+        if (! isset($this->meta[$key])) {
             throw new APIClientError("meta key '$key' is not set.");
         }
 
@@ -240,7 +198,7 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
     }
 
     /**
-     * List of available metadata keys.
+     * List all metadata keys.
      *
      * @return string[]
      */
@@ -252,126 +210,59 @@ class Payload implements \IteratorAggregate, \ArrayAccess, \Countable
     /**
      * Get an error value or all errors.
      *
-     * @param string|null $key
+     * @param string|null $key Error key or null for all
      * @return mixed
      * @throws APIClientError
      */
     public function get_error(?string $key = null): mixed
     {
         if (is_null($key)) {
-            return $this->errors;
+            return $this->error;
         }
 
-        if (!isset($this->errors[$key])) {
+        if (! isset($this->error[$key])) {
             throw new APIClientError("error key '$key' is not set.");
         }
 
-        return $this->errors[$key];
+        return $this->error[$key];
     }
 
     /**
-     * Iterator for contained items.
+     * Return the number of items in the content.
      *
-     * @return ArrayIterator<int, Item>
+     * @return int
      */
-    public function getIterator(): ArrayIterator
-    {
-        if ($this->collection !== null) {
-            return new ArrayIterator($this->collection);
-        }
-
-        return new ArrayIterator($this->item ? [$this->item] : []);
-    }
-
     public function count(): int
     {
-        return $this->is_collection()
-            ? count($this->collection)
-            : ($this->item ? 1 : 0);
-    }
-
-    public function offsetExists($offset): bool
-    {
-        return $offset === 0 && $this->is_single_item()
-            ? true
-            : isset($this->collection[$offset]);
-    }
-
-    public function offsetGet($offset): mixed
-    {
-        if ($offset === 0 && $this->is_single_item()) {
-            return $this->item;
-        }
-
-        return $this->collection[$offset] ?? null;
-    }
-
-    public function offsetSet($offset, $value): void
-    {
-        if (is_null($offset)) {
-            $this->collection[] = $value;
-        } else {
-            $this->collection[$offset] = $value;
-        }
-    }
-
-    public function offsetUnset($offset): void
-    {
-        if ($offset === 0 && $this->is_single_item()) {
-            $this->item = null;
-            return;
-        }
-
-        unset($this->collection[$offset]);
+        return $this->is_collection() ? count($this->content) : 1;
     }
 
     /**
-     * Detect which key holds the primary list of resources.
+     * Return object info for var_dump and debugging.
+     *
+     * Excludes raw response to avoid clutter.
+     *
+     * @return array<string,mixed>
      */
-    private function detect_primary_key(array $data): string
+    public function __debugInfo(): array
     {
-        foreach (array_keys($data) as $key) {
-            if (
-                in_array($key, static::$primary_list_key, true) &&
-                static::is_list_of_items($data[$key])
-            ) {
-                return $key;
+        $info = [];
+        $property_reflections = (new \ReflectionClass(static::class))->getProperties();
+
+        foreach ($property_reflections as $property_reflection) {
+            $property_name = $property_reflection->getName();
+
+            if ($property_name === 'raw') {
+                continue;
+            }
+
+            if ($property_reflection->isStatic()) {
+                $info["::" . $property_name] = static::$$property_name ?? null;
+            } else {
+                $info[$property_name] = $this->$property_name ?? null;
             }
         }
-        return '';
-    }
 
-    /**
-     * Detect the key holding metadata.
-     */
-    private function detect_meta_key(array $data): string
-    {
-        foreach (array_keys($data) as $key) {
-            if (in_array($key, static::$meta_key, true)) {
-                return $key;
-            }
-        }
-        return '';
-    }
-
-    /**
-     * Detect the key holding error data.
-     */
-    private function detect_error_key(array $data): string
-    {
-        foreach (array_keys($data) as $key) {
-            if (in_array($key, static::$error_key, true)) {
-                return $key;
-            }
-        }
-        return '';
-    }
-
-    /**
-     * Check if a value is a numerically indexed array (0-based).
-     */
-    protected static function is_list_of_items(mixed $val): bool
-    {
-        return is_array($val) && array_keys($val) === range(0, count($val) - 1);
+        return $info;
     }
 }
