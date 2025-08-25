@@ -5,7 +5,6 @@ namespace PHP_Library\Router\HTMLResponse;
 use PHP_Library\Error\Error;
 use PHP_Library\Router\Router;
 use PHP_Library\Superglobals\Get;
-use PHP_Library\Superglobals\Server;
 
 class HTMLDoc
 {

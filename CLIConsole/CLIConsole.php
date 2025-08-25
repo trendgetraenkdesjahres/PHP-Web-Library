@@ -2,8 +2,6 @@
 
 namespace  PHP_Library\CLIConsole;
 
-use Dom\Document;
-use DOMDocument;
 use PHP_Library\ClassTraits\SingletonPattern;
 use PHP_Library\CLIConsole\Command\Command;
 use PHP_Library\CLIConsole\Error\Error;
